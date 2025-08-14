@@ -12,6 +12,18 @@
     "build:linux": "electron-builder --linux AppImage deb",
     "build": "electron-builder -mwl"
   },
+  {
+  "name": "lilija-pos",
+  "private": true,
+  "version": "1.0.0",
+  "scripts": {
+    "scan": "node tools/selfcheck.js"
+  },
+  "engines": {
+    "node": ">=18"
+  }
+}
+
   "devDependencies": {
     "electron": "^29.0.0",
     "electron-builder": "^24.9.1"
