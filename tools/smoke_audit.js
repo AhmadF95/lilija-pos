@@ -1,48 +1,44 @@
 const { JSDOM } = require('jsdom');
+const assert = require('assert');
 const fs = require('fs');
-const vm = require('vm');
+const path = require('path');
 
-const dom = new JSDOM(`<!DOCTYPE html><body>
-  <div class="tab active" data-tab="audit"></div>
-  <section class="panel" data-tab="audit"></section>
-</body>`, { runScripts: 'outside-only' });
+const dom = new JSDOM(`<!doctype html><html><body>
+<div id="tabs"><button class="tab active" data-tab="audit"></button></div>
+<section class="panel" data-tab="audit"></section>
+</body></html>`, { url: 'http://localhost' });
 
-const { window } = dom;
-const { document } = window;
-
+global.window = dom.window;
+global.document = dom.window.document;
+window.CURRENT_USER = 'tester';
+window.can = () => true;
+window.alert = () => {};
+window.confirm = () => true;
+window.uid = () => 'id';
 window.saveDB = () => {};
-window.loadDB = () => { throw new Error('loadDB called'); };
+
+const scriptPath = path.join(__dirname, '..', 'modules', 'audit_log.js');
+dom.window.eval(fs.readFileSync(scriptPath, 'utf8'));
+
 window.db = { audit: [] };
 for (let i = 0; i < 5; i++) {
   window.db.audit.push({
-    ts: `2024-01-0${i+1} 00:00:00`,
-    user: 'u',
-    module: 'm',
-    action: 'a',
-    refId: '',
-    details: '',
+    ts: `2024-01-0${i + 1} 00:00:00`,
+    user: `u${i}`,
+    module: 'mod',
+    action: 'act',
+    refId: String(i),
+    details: 'd',
     qty: ''
   });
 }
-
-const auditSrc = fs.readFileSync('modules/audit_log.js', 'utf8');
-vm.runInContext(auditSrc, dom.getInternalVMContext());
-
 const before = window.db.audit.length;
-if (before < 5) {
-  console.error('expected at least 5 audit entries');
-  process.exit(1);
-}
+assert.ok(before >= 5, 'audit length should be >= 5');
 
 window.renderAudit();
+
+assert.strictEqual(window.db.audit.length, before, 'renderAudit should not modify audit array');
 const rows = document.querySelectorAll('#auditTable tbody tr').length;
-if (!rows) {
-  console.error('renderAudit produced no rows');
-  process.exit(1);
-}
-if (window.db.audit.length !== before) {
-  console.error('renderAudit mutated audit log');
-  process.exit(1);
-}
+assert.strictEqual(rows, before, 'renderAudit should produce one row per entry');
 
 console.log('smoke:audit ok');
