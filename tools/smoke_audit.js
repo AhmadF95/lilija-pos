@@ -33,12 +33,12 @@ for (let i = 0; i < 5; i++) {
   });
 }
 const before = window.db.audit.length;
-assert(before >= 5, 'audit length should be >=5');
+assert.ok(before >= 5, 'audit length should be >= 5');
 
 window.renderAudit();
 
 assert.strictEqual(window.db.audit.length, before, 'renderAudit should not modify audit array');
 const rows = document.querySelectorAll('#auditTable tbody tr').length;
-assert(rows >= before, 'renderAudit should produce table rows');
+assert.strictEqual(rows, before, 'renderAudit should produce one row per entry');
 
 console.log('smoke:audit ok');

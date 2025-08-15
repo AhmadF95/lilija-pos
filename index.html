@@ -1234,7 +1234,11 @@ async function confirmDeleteUniversal(module, id, name = '', extraQty = '') {
   });
 
   // ====== Refresh All ======
-  function refreshAll(){ renderProducts(); renderPurchases(); renderSales(); renderReports(); renderSettings(); if(typeof renderAudit==='function'){try{renderAudit();}catch(e){}} try{ if(typeof renderUsersAdmin==='function') renderUsersAdmin(); }catch(e){ console.warn('renderUsersAdmin error', e);} try{ if(typeof renderAudit==='function') renderAudit(); }catch(e){ console.warn('renderAudit error', e);} }
+  function refreshAll(){
+    renderProducts(); renderPurchases(); renderSales(); renderReports(); renderSettings();
+    try { if (typeof renderAudit === 'function') renderAudit(); } catch (e) { console.warn('renderAudit error', e); }
+    try { if (typeof renderUsersAdmin === 'function') renderUsersAdmin(); } catch (e) { console.warn('renderUsersAdmin error', e); }
+  }
 
   // ====== Auth UI ======
   const authOverlay = document.getElementById('authOverlay');
