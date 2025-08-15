@@ -12,14 +12,16 @@
     "build:mac": "electron-builder --mac dmg",
     "build:linux": "electron-builder --linux AppImage deb",
     "build": "electron-builder -mwl",
-    "scan": "node tools/selfcheck.js"
+    "scan": "node tools/selfcheck.js",
+    "smoke:audit": "node tools/smoke_audit.js"
   },
   "engines": {
     "node": ">=18"
   },
   "devDependencies": {
     "electron": "^29.0.0",
-    "electron-builder": "^24.9.1"
+    "electron-builder": "^24.9.1",
+    "jsdom": "^24.0.0"
   },
   "build": {
     "appId": "com.ministore.desktop",

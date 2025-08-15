@@ -15,9 +15,7 @@
   // تسجيل حركة + حفظ + رندر فوري
   window.recordAudit = function (action, module, refId, details, qty) {
     try {
-      if (!window.db || typeof window.db !== 'object') {
-        window.db = (typeof loadDB === 'function') ? loadDB() : {};
-      }
+      if (!window.db || typeof window.db !== 'object') return;
       if (!Array.isArray(window.db.audit)) window.db.audit = [];
 
       const me = window.CURRENT_USER || 'unknown';
@@ -50,13 +48,8 @@
     const panel = document.querySelector('section.panel[data-tab="audit"]');
     if (!panel) return;
 
-    // حمّل القاعدة عند الحاجة
-    try {
-      if (!window.db || typeof window.db !== 'object') {
-        window.db = (typeof loadDB === 'function') ? loadDB() : {};
-      }
-      if (!Array.isArray(window.db.audit)) window.db.audit = [];
-    } catch (_) {}
+    // تأكّد من وجود القاعدة في الذاكرة
+    if (!window.db || !Array.isArray(window.db.audit)) return;
 
     // لا تُظهر اللوحة إلا إذا تبويب السجل هو النشط
     const activeTab = document.querySelector('.tab.active')?.dataset.tab;
@@ -161,22 +154,5 @@
       return ret;
     };
   })();
-
-  // عند الإقلاع: حمّل القاعدة، حدّث الشارة، وإن كان تبويب السجل نشط اعرضه فورًا
-  window.addEventListener('DOMContentLoaded', () => {
-    try {
-      if (!window.db || typeof window.db !== 'object') {
-        window.db = (typeof loadDB === 'function') ? loadDB() : {};
-      }
-      if (!Array.isArray(window.db.audit)) window.db.audit = [];
-    } catch (_) {}
-
-    const b = document.getElementById('bootChecks');
-    if (b) b.textContent = 'وحدات محمّلة: سجل/مستخدمون';
-
-    const active = document.querySelector('.tab.active')?.dataset.tab;
-    if (active === 'audit') {
-      setTimeout(() => { try { renderAudit(); } catch (_) {} }, 0);
-    }
-  });
+  // تهيئة أولية تتم في index.html
 })();

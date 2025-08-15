@@ -1361,5 +1361,15 @@ async function confirmDeleteUniversal(module, id, name = '', extraQty = '') {
   <script src="modules/users_admin.js"></script>
   <script src="modules/audit_log.js"></script>
 
+  <script>
+    document.addEventListener('DOMContentLoaded', () => {
+      const b = document.getElementById('bootChecks');
+      if (b) b.textContent = 'وحدات محمّلة: سجل/مستخدمون';
+      if (document.querySelector('.tab.active')?.dataset.tab === 'audit' && typeof renderAudit === 'function') {
+        renderAudit();
+      }
+    });
+  </script>
+
 </body>
 </html>
