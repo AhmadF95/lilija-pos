@@ -11,6 +11,7 @@ const { window } = dom;
 const { document } = window;
 
 window.saveDB = () => {};
+window.loadDB = () => { throw new Error('loadDB called'); };
 window.db = { audit: [] };
 for (let i = 0; i < 5; i++) {
   window.db.audit.push({

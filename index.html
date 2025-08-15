@@ -1318,6 +1318,7 @@ async function confirmDeleteUniversal(module, id, name = '', extraQty = '') {
     CURRENT_USER = username;
     DB_KEY = DB_KEY_BASE; try { const legacy = localStorage.getItem(DB_KEY_BASE + ':' + username); if(legacy && !localStorage.getItem(DB_KEY)) localStorage.setItem(DB_KEY, legacy); } catch(e){}
     db = loadDB();
+    window.db = db;
     whoami.textContent = 'المستخدم: ' + username;
     btnLogout.hidden = false;
     hideAuth();
