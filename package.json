@@ -1,6 +1,7 @@
 {
-  "name": "lilija-desktop",
+  "name": "lilija-pos",
   "version": "1.1.0",
+  "private": true,
   "description": "Simple Inventory & Sales desktop app (Arabic) packaged with Electron",
   "main": "main.js",
   "author": "You",
@@ -10,20 +11,12 @@
     "build:win": "electron-builder --win nsis portable",
     "build:mac": "electron-builder --mac dmg",
     "build:linux": "electron-builder --linux AppImage deb",
-    "build": "electron-builder -mwl"
-  },
-  {
-  "name": "lilija-pos",
-  "private": true,
-  "version": "1.0.0",
-  "scripts": {
+    "build": "electron-builder -mwl",
     "scan": "node tools/selfcheck.js"
   },
   "engines": {
     "node": ">=18"
-  }
-}
-
+  },
   "devDependencies": {
     "electron": "^29.0.0",
     "electron-builder": "^24.9.1"
@@ -53,3 +46,4 @@
     }
   }
 }
+
