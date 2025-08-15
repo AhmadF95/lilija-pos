@@ -14,7 +14,7 @@
 
   // تسجيل حركة + حفظ + رندر فوري
   window.recordAudit = function (action, module, refId, details, qty) {
-    try {
+      try {
       if (!window.db || typeof window.db !== 'object') return;
       if (!Array.isArray(window.db.audit)) window.db.audit = [];
 
