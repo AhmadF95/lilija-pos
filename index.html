@@ -162,6 +162,83 @@
       </div>
     </section>
 
+    <!-- لوحة العرض -->
+    <section class="panel" data-tab="dashboard" hidden>
+      <h2>لوحة العرض</h2>
+      
+      <!-- فترة التقرير -->
+      <div class="grid" style="margin-bottom: 16px;">
+        <div class="g6">
+          <label>فترة التقرير</label>
+          <div class="flex" style="gap: 8px;">
+            <button type="button" class="tab" id="periodToday" data-period="today">اليوم</button>
+            <button type="button" class="tab" id="periodWeek" data-period="week">هذا الأسبوع</button>
+            <button type="button" class="tab" id="periodMonth" data-period="month">هذا الشهر</button>
+            <button type="button" class="tab" id="periodCustom" data-period="custom">فترة مخصصة</button>
+          </div>
+        </div>
+        <div class="g6" id="customDateRange" hidden>
+          <div class="flex" style="gap: 8px;">
+            <div>
+              <label>من تاريخ</label>
+              <input type="date" id="customStartDate" />
+            </div>
+            <div>
+              <label>إلى تاريخ</label>
+              <input type="date" id="customEndDate" />
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <!-- المؤشرات الرئيسية -->
+      <div class="kpis" id="dashboardKpis"></div>
+
+      <!-- التحكم في الرسوم البيانية -->
+      <div class="grid" style="margin: 16px 0;">
+        <div class="g6">
+          <label>نوع البيانات</label>
+          <select id="chartDataset">
+            <option value="sales">المبيعات</option>
+            <option value="purchases">المشتريات</option>
+            <option value="profit">الربح</option>
+          </select>
+        </div>
+        <div class="g6">
+          <label>نوع الرسم البياني</label>
+          <select id="chartType">
+            <option value="line">خطي</option>
+            <option value="bar">أعمدة</option>
+            <option value="pie">دائري</option>
+          </select>
+        </div>
+      </div>
+
+      <!-- الرسم البياني -->
+      <div style="background: #0b1224; border: 1px solid #1f2a44; border-radius: 14px; padding: 14px; margin: 16px 0;">
+        <canvas id="dashboardChart" width="800" height="400" style="width: 100%; height: 300px; max-width: 800px;"></canvas>
+      </div>
+
+      <!-- جدول الملخص اليومي -->
+      <div class="flex" style="margin-top: 18px;">
+        <h3 style="margin: 0">الملخص اليومي</h3>
+        <div class="right">
+          <button id="exportDashboardSummary" type="button" class="btn-muted" data-export="1" data-table="dashboardSummaryTable" data-filename="dashboard-summary.csv">⬇️ تصدير (Excel)</button>
+        </div>
+      </div>
+      <table id="dashboardSummaryTable">
+        <thead>
+          <tr>
+            <th>التاريخ</th>
+            <th>إجمالي المبيعات</th>
+            <th>إجمالي المشتريات</th>
+            <th>الربح</th>
+          </tr>
+        </thead>
+        <tbody></tbody>
+      </table>
+    </section>
+
     <!-- تقارير -->
     <section class="panel" data-tab="reports" hidden>
       <h2>التقارير</h2>
@@ -447,12 +524,13 @@ function nextPo(){
     {id:'products', label:'📦 المنتجات'},
     {id:'purchases', label:'⬅️ المشتريات'},
     {id:'sales', label:'➡️ المبيعات (طلبات)'},
+    {id:'dashboard', label:'📊 لوحة العرض'},
     {id:'reports', label:'📈 التقارير'},
     {id:'settings', label:'⚙️ الإعدادات'},
     {id:'audit', label:'📝 سجل الحركات'},
   ];
   // ====== Roles & Permissions ======
-  const MODULES = ['products','purchases','sales','users','settings','audit'];
+  const MODULES = ['products','purchases','sales','dashboard','users','settings','audit'];
   const ACTIONS = ['view','edit','delete'];
   function currentUser(){
     const users = loadUsers() || []; return users.find(u=>u.username===CURRENT_USER) || null;
@@ -482,7 +560,12 @@ function nextPo(){
   tabsCfg.forEach(t=>{ const b = document.createElement('button'); b.className='tab'; b.textContent=t.label; b.dataset.tab=t.id; tabsEl.appendChild(b); });
   function activateTab(id){
     document.querySelectorAll('.tab').forEach(b=>b.classList.toggle('active', b.dataset.tab===id));
-    document.querySelectorAll('section.panel').forEach(s=>{ s.hidden = s.dataset.tab!==id; if(id==='settings' && typeof renderUsersAdmin==='function') renderUsersAdmin(); if(id==='audit' && typeof renderAudit==='function') renderAudit(); });
+    document.querySelectorAll('section.panel').forEach(s=>{ 
+      s.hidden = s.dataset.tab!==id; 
+      if(id==='settings' && typeof renderUsersAdmin==='function') renderUsersAdmin(); 
+      if(id==='audit' && typeof renderAudit==='function') renderAudit();
+      if(id==='dashboard' && typeof renderDashboard==='function') renderDashboard();
+    });
     localStorage.setItem(DB_KEY+':tab', id);
     refreshAll();
   }
@@ -1110,6 +1193,106 @@ function printPurchaseByPO(po){
     }
   }
 
+  // ====== Dashboard ======
+  function renderDashboard() {
+    if (typeof window.dashboardModule === 'undefined') return;
+    
+    // Initialize dashboard state
+    let currentPeriod = 'today';
+    let customStartDate = '';
+    let customEndDate = '';
+    
+    // Period selection handling
+    const periodButtons = document.querySelectorAll('[data-period]');
+    const customDateRange = document.getElementById('customDateRange');
+    const customStart = document.getElementById('customStartDate');
+    const customEnd = document.getElementById('customEndDate');
+    
+    function updatePeriodSelection(period) {
+      currentPeriod = period;
+      periodButtons.forEach(btn => {
+        btn.classList.toggle('active', btn.dataset.period === period);
+      });
+      customDateRange.hidden = period !== 'custom';
+      updateDashboard();
+    }
+    
+    function updateDashboard() {
+      customStartDate = customStart?.value || '';
+      customEndDate = customEnd?.value || '';
+      
+      // Update KPIs
+      const kpis = window.dashboardModule.calculateKPIs(currentPeriod, customStartDate, customEndDate);
+      renderKPIs(kpis);
+      
+      // Update chart
+      updateChart(kpis.dailyData);
+      
+      // Update summary table
+      const summary = window.dashboardModule.generateDailySummary(currentPeriod, customStartDate, customEndDate);
+      renderSummaryTable(summary);
+    }
+    
+    function renderKPIs(kpis) {
+      const kpiContainer = document.getElementById('dashboardKpis');
+      if (!kpiContainer) return;
+      
+      kpiContainer.innerHTML = '';
+      const items = [
+        {label:'إجمالي المبيعات', value: currency(kpis.totalSales)},
+        {label:'إجمالي المشتريات', value: currency(kpis.totalPurchases)},
+        {label:'الربح', value: currency(kpis.profit)},
+        {label:'قيمة المخزون', value: currency(kpis.stock)},
+      ];
+      
+      for(const item of items) {
+        const d = document.createElement('div');
+        d.className = 'kpi';
+        d.innerHTML = `<div class="hint">${item.label}</div><div style="font-size:22px;margin-top:6px">${item.value}</div>`;
+        kpiContainer.appendChild(d);
+      }
+    }
+    
+    function updateChart(dailyData) {
+      const dataset = document.getElementById('chartDataset')?.value || 'sales';
+      const chartType = document.getElementById('chartType')?.value || 'line';
+      window.dashboardModule.renderChart('dashboardChart', dailyData, chartType, dataset);
+    }
+    
+    function renderSummaryTable(summary) {
+      const tbody = document.querySelector('#dashboardSummaryTable tbody');
+      if (!tbody) return;
+      
+      tbody.innerHTML = '';
+      for(const day of summary) {
+        const tr = document.createElement('tr');
+        tr.innerHTML = `
+          <td>${day.date}</td>
+          <td>${currency(day.sales)}</td>
+          <td>${currency(day.purchases)}</td>
+          <td>${currency(day.profit)}</td>
+        `;
+        tbody.appendChild(tr);
+      }
+    }
+    
+    // Event listeners
+    periodButtons.forEach(btn => {
+      btn.addEventListener('click', () => updatePeriodSelection(btn.dataset.period));
+    });
+    
+    if (customStart) customStart.addEventListener('change', updateDashboard);
+    if (customEnd) customEnd.addEventListener('change', updateDashboard);
+    
+    const chartDataset = document.getElementById('chartDataset');
+    const chartType = document.getElementById('chartType');
+    if (chartDataset) chartDataset.addEventListener('change', () => updateChart(window.dashboardModule.calculateKPIs(currentPeriod, customStartDate, customEndDate).dailyData));
+    if (chartType) chartType.addEventListener('change', () => updateChart(window.dashboardModule.calculateKPIs(currentPeriod, customStartDate, customEndDate).dailyData));
+    
+    // Initialize with today's data
+    updatePeriodSelection('today');
+  }
+
   // ====== Settings ======
   const lowStockThreshold = document.getElementById('lowStockThreshold');
   function renderSettings(){ if(lowStockThreshold) lowStockThreshold.value = db.settings.lowStockThreshold; }
@@ -1238,6 +1421,7 @@ async function confirmDeleteUniversal(module, id, name = '', extraQty = '') {
     renderProducts(); renderPurchases(); renderSales(); renderReports(); renderSettings();
     try { if (typeof renderAudit === 'function') renderAudit(); } catch (e) { console.warn('renderAudit error', e); }
     try { if (typeof renderUsersAdmin === 'function') renderUsersAdmin(); } catch (e) { console.warn('renderUsersAdmin error', e); }
+    try { if (typeof renderDashboard === 'function') renderDashboard(); } catch (e) { console.warn('renderDashboard error', e); }
   }
 
   // ====== Auth UI ======
@@ -1366,6 +1550,7 @@ async function confirmDeleteUniversal(module, id, name = '', extraQty = '') {
   <!-- LILIJA modules -->
   <script src="modules/users_admin.js"></script>
   <script src="modules/audit_log.js"></script>
+  <script src="modules/dashboard.js"></script>
 
   <script>
     document.addEventListener('DOMContentLoaded', () => {
