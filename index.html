@@ -533,6 +533,32 @@ function nextPo(){
   function getLastTab(){ return localStorage.getItem(dbKey+':tab') || 'products'; }
 
   // ====== Products ======
+  
+  // Product duplicate validation helpers
+  function isDuplicateProductName(name, exceptId) {
+    const n = (name || '').trim().toLowerCase();
+    if (!n) return false;
+    try {
+      return Array.isArray(window.db?.products) && window.db.products.some(p =>
+        (p?.name || '').trim().toLowerCase() === n && p.id !== exceptId
+      );
+    } catch (e) { return false; }
+  }
+
+  function isDuplicateSKU(sku, exceptId) {
+    const s = (sku || '').trim().toLowerCase();
+    if (!s) return false; // empty SKU allowed
+    try {
+      return Array.isArray(window.db?.products) && window.db.products.some(p =>
+        (p?.sku || '').trim().toLowerCase() === s && p.id !== exceptId
+      );
+    } catch (e) { return false; }
+  }
+
+  // Guard against double-definition
+  if (typeof window.isDuplicateProductName !== 'function') window.isDuplicateProductName = isDuplicateProductName;
+  if (typeof window.isDuplicateSKU !== 'function') window.isDuplicateSKU = isDuplicateSKU;
+
   const pName = document.getElementById('pName');
   const pSku = document.getElementById('pSku');
   const pCat = document.getElementById('pCat');
