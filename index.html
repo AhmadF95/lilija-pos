@@ -689,15 +689,20 @@ function renderPurchases() {
     db.products.map(p => `<option value="${p.id}">${p.name}</option>`).join('');
 
   // 2) حقول المورّدين + بادج رقم الطلب: ننشئها مرّة واحدة بجانب حقول الشراء
-  ensureCounters();
-  const controls = buyProduct.parentElement; // ضعها حيث تريد (يمكن تغييرها إلى حاوية أوسع)
-  if (controls && !document.getElementById('supName')) {
-    controls.insertAdjacentHTML('beforeend', `
+  // 2) حقول المورّدين + بادج رقم الطلب: داخل صندوق المسودة (poDraftBox)
+ensureCounters();
+const poBox = document.getElementById('poDraftBox');
+if (poBox && !document.getElementById('supName')) {
+  poBox.insertAdjacentHTML('afterbegin', `
+    <div id="supFields" class="flex" style="gap:8px;margin-bottom:8px;align-items:center">
+      <span id="poPreview" class="tag" title="رقم الطلب القادم">#${db.counters?.nextPo ?? 1001}</span>
       <input id="supName"  placeholder="اسم المورد (اختياري)" />
       <input id="supPhone" placeholder="رقم المورد (اختياري)" />
-      <span id="poPreview" class="badge" title="رقم الطلب القادم">#${db.counters.nextPo}</span>
-    `);
-  }
+    </div>
+  `);
+}
+const poPreview = document.getElementById('poPreview');
+if (poPreview) poPreview.textContent = '#' + (db.counters?.nextPo ?? 1001);
   const supName   = document.getElementById('supName');
   const supPhone  = document.getElementById('supPhone');
   const poPreview = document.getElementById('poPreview');
@@ -774,6 +779,11 @@ if (addBtn && !addBtn.__boundDraft){
   };
 }
    // حفظ الفاتورة (إنشاء PO واحد وتفريغ المسودة)
+  // داخل btnSavePO.onclick وبعد renderPurchaseDraft() و refreshAll()
+const supNameEl  = document.getElementById('supName');
+const supPhoneEl = document.getElementById('supPhone');
+if (supNameEl)  supNameEl.value  = '';
+if (supPhoneEl) supPhoneEl.value = '';
 const btnSavePO = document.getElementById('savePO');
 if (btnSavePO && !btnSavePO.__bound){
   btnSavePO.__bound = true;
@@ -808,7 +818,11 @@ if (btnSavePO && !btnSavePO.__bound){
     const poPrev2= document.getElementById('poPreview2'); if(poPrev2) poPrev2.textContent= '#' + (db.counters?.nextPo ?? 1001);
     renderPurchaseDraft();
     refreshAll();
-
+    // داخل btnClear.onclick بعد تفريغ المسودة
+const supNameEl  = document.getElementById('supName');
+const supPhoneEl = document.getElementById('supPhone');
+if (supNameEl)  supNameEl.value  = '';
+if (supPhoneEl) supPhoneEl.value = '';
     if(confirm('تم الحفظ. هل تريد طباعة الفاتورة الآن؟')){
       printPurchaseByPO(po);
     }
@@ -841,10 +855,14 @@ if (btnPrintDraft && !btnPrintDraft.__bound){
       if (!res.ok) return;
       db.purchases = db.purchases.filter(x => x.id !== id);
       saveDB(db); refreshAll();
+      // اختياري بعد increment nextPo + refreshAll()
+const poPrev = document.getElementById('poPreview');
+if (poPrev) poPrev.textContent = '#' + (db.counters?.nextPo ?? 1001);
       return;
     }
   };
 }
+    
 // مسودة فاتورة المشتريات (PO draft)
 let purchaseDraft = []; // [{productId, qty, unitCost}...]
 
