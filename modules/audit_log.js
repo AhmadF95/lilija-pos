@@ -133,7 +133,7 @@
     };
   };
 
-  // جعل الاستماع للضغط متين (حتى لو ضغط داخل محتوى زر التبويب)
+  // Click handler for audit tab (redundant but kept for robustness)
   document.addEventListener('click', (e) => {
     const tab = e.target.closest('.tab[data-tab="audit"]');
     if (tab) {
@@ -141,18 +141,5 @@
     }
   });
 
-  // دعم التفعيل البرمجي للتبويب
-  (function hookActivateTabOnce() {
-    if (window.__auditHookedActivate) return;
-    window.__auditHookedActivate = true;
-    const orig = window.activateTab;
-    window.activateTab = function (id) {
-      const ret = orig ? orig.apply(this, arguments) : undefined;
-      if (id === 'audit') {
-        setTimeout(() => { try { renderAudit(); } catch (_) {} }, 0);
-      }
-      return ret;
-    };
-  })();
-  // تهيئة أولية تتم في index.html
+  // Note: activateTab already calls renderAudit when needed, so no monkey-patching required
 })();
