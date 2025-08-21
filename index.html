@@ -481,7 +481,23 @@ function nextPo(){
   const defaults = { products: [], purchases: [], sales: [], settings: { lowStockThreshold: 5 }, audit: [] };
   function loadDB(){ try{ return JSON.parse(localStorage.getItem(dbKey)) || deepClone(defaults);}catch{ return deepClone(defaults); } }
   function saveDB(db){ localStorage.setItem(dbKey, JSON.stringify(db)); }
+  
   let db = null;
+  
+  // ====== Light App namespace to reduce global pollution ======
+  window.App = {
+    db: null,
+    setDB: function(newDb) { 
+      this.db = newDb; 
+      window.db = newDb; // Keep legacy global for compatibility
+    },
+    getDB: function() { return this.db || window.db; },
+    getCurrentUser: () => window.getCurrentUser ? getCurrentUser() : null,
+    utils: window.LilijaUtils,
+    auth: window.LilijaAuth, 
+    data: window.LilijaData
+  };
+  
   window.db = db;
 
   // ====== Helpers ======
@@ -1441,7 +1457,7 @@ async function confirmDeleteUniversal(module, id, name = '', extraQty = '') {
     currentUser = username;
     dbKey = dbKeyBase; try { const legacy = localStorage.getItem(dbKeyBase + ':' + username); if(legacy && !localStorage.getItem(dbKey)) localStorage.setItem(dbKey, legacy); } catch(e){}
     db = loadDB();
-    window.db = db;
+    App.setDB(db);
     whoami.textContent = 'المستخدم: ' + username;
     btnLogout.hidden = false;
     hideAuth();
