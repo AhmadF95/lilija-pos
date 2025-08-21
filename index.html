@@ -590,18 +590,14 @@ function nextPo(){
 
   if (!name) { alert('أدخل اسم المنتج'); pName.focus(); return; }
 
-  // تطبيع للمقارنة (منع التكرار بدون حساسية حالة وإهمال المسافات)
-  const norm = s => (s || '').trim().toLowerCase();
-
-  // منع تكرار الاسم
-  if (db.products.some(x => norm(x.name) === norm(name))) {
+  // Check for duplicates using shared utilities
+  if (isDuplicateProductName(name)) {
     alert('اسم المنتج موجود مسبقًا');
     pName.focus();
     return;
   }
 
-  // منع تكرار الباركود/‏SKU (لو تم إدخاله)
-  if (sku && db.products.some(x => norm(x.sku) === norm(sku))) {
+  if (isDuplicateSKU(sku)) {
     alert('الباركود/‏SKU مستخدم مسبقًا');
     pSku.focus();
     return;
@@ -662,19 +658,17 @@ function nextPo(){
       const cat   = prompt('الفئة',      p.cat || ''); if (cat   === null) return;
       const price = parseFloat(prompt('سعر البيع', p.price || 0));
       if (Number.isNaN(price)) return;
-       const norm = s => (s || '').trim().toLowerCase();
 
-// منع تكرار الاسم لغير نفس المنتج
-if (db.products.some(x => x.id !== p.id && norm(x.name) === norm(name))) {
-  alert('اسم المنتج موجود مسبقًا');
-  return;
-}
+      // Check for duplicates using shared utilities (excluding current product)
+      if (isDuplicateProductName(name, p.id)) {
+        alert('اسم المنتج موجود مسبقًا');
+        return;
+      }
 
-// منع تكرار SKU لو مش فاضي
-if (sku && db.products.some(x => x.id !== p.id && norm(x.sku) === norm(sku))) {
-  alert('الباركود/‏SKU مستخدم مسبقًا');
-  return;
-}
+      if (isDuplicateSKU(sku, p.id)) {
+        alert('الباركود/‏SKU مستخدم مسبقًا');
+        return;
+      }
 
 Object.assign(p, { name, sku, cat, price });
 try { recordAudit && recordAudit('edit','products', p.id, `name=${name},sku=${sku},price=${price}`); } catch(_){}
@@ -1544,6 +1538,7 @@ async function confirmDeleteUniversal(module, id, name = '', extraQty = '') {
   </script>
 
   <!-- LILIJA modules -->
+  <script src="modules/utils.js"></script>
   <script src="modules/users_admin.js"></script>
   <script src="modules/audit_log.js"></script>
   <script src="modules/dashboard.js"></script>
