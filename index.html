@@ -139,6 +139,10 @@
           </div>
           <label>رسوم التوصيل (اختياري)</label>
           <input id="deliveryFee" type="number" step="0.01" value="0" />
+          <label>اسم العميل (اختياري)</label>
+          <input id="customerName" type="text" placeholder="اكتب اسم العميل" />
+          <label>رقم الهاتف (اختياري)</label>
+          <input id="customerPhone" type="tel" placeholder="اكتب رقم الهاتف" />
           <button class="btn-primary" id="addLine" type="button">➕ إضافة للطلب</button>
           <label style="margin-top:12px">تاريخ الطلب</label><input id="orderDate" type="date" />
           <button class="btn-primary" id="saveOrder" type="button" style="margin-top:8px">💾 حفظ الطلب</button>
@@ -155,7 +159,7 @@
             <button id="exportOrders" type="button" class="btn-muted" data-export="1" data-table="ordersTable" data-filename="orders.csv">⬇️ تصدير (Excel)</button>
           </div></div>
           <table id="ordersTable">
-            <thead><tr><th>التاريخ</th><th>عدد الأصناف</th><th>إجمالي الطلب</th><th>خيارات</th></tr></thead>
+            <thead><tr><th>التاريخ</th><th>عدد الأصناف</th><th>إجمالي الطلب</th><th>اسم العميل</th><th>رقم الهاتف</th><th>خيارات</th></tr></thead>
             <tbody></tbody>
           </table>
         </div>
@@ -1049,8 +1053,14 @@ function printPurchaseByPO(po){
       }
     }
     const delFee = Number(deliveryFee?.value)||0;
-    const _oid = uid(); db.sales.push({ id: _oid, date: (orderDate && orderDate.value) || nowISO(), items: deepClone(currentOrder.items), deliveryFee: delFee });
-    try{ recordAudit('add','sales', _oid, 'order', currentOrder.items.length);}catch{} saveDB(db); currentOrder.items = []; renderSales(); renderReports();
+    const custName = document.getElementById('customerName')?.value || '';
+    const custPhone = document.getElementById('customerPhone')?.value || '';
+    const _oid = uid(); db.sales.push({ id: _oid, date: (orderDate && orderDate.value) || nowISO(), items: deepClone(currentOrder.items), deliveryFee: delFee, customerName: custName, customerPhone: custPhone });
+    try{ recordAudit('add','sales', _oid, 'order', currentOrder.items.length);}catch{} saveDB(db); currentOrder.items = []; 
+    // Clear customer fields after saving
+    if(document.getElementById('customerName')) document.getElementById('customerName').value = '';
+    if(document.getElementById('customerPhone')) document.getElementById('customerPhone').value = '';
+    renderSales(); renderReports();
     alert('تم حفظ الطلب');
   };
 
@@ -1064,7 +1074,9 @@ function printPurchaseByPO(po){
       } else { total = (Number(o.qty)||0)*(Number(o.unitPrice)||0); }
       total += Number(o.deliveryFee||0);
       const tr = document.createElement('tr');
-      tr.innerHTML = `<td>${o.date||''}</td><td>${itemCount}</td><td>${total.toFixed(2)}</td>
+      const customerName = o.customerName || '—';
+      const customerPhone = o.customerPhone || '—';
+      tr.innerHTML = `<td>${o.date||''}</td><td>${itemCount}</td><td>${total.toFixed(2)}</td><td>${customerName}</td><td>${customerPhone}</td>
       <td class="flex"><button data-inv="${o.id}" type="button">فاتورة</button><button data-del-order="${o.id}" class="btn-danger" type="button">حذف</button></td>`;
       tbody.appendChild(tr);
     }
@@ -1127,6 +1139,8 @@ function printPurchaseByPO(po){
       <body>
         <h2>فاتورة</h2>
         <div>تاريخ: ${o.date||''}</div>
+        ${o.customerName ? `<div>اسم العميل: ${o.customerName}</div>` : ''}
+        ${o.customerPhone ? `<div>رقم الهاتف: ${o.customerPhone}</div>` : ''}
         <hr/>
         <table>
           <thead><tr><th>المنتج</th><th>الكمية</th><th>سعر الوحدة</th><th>خصم</th><th>الإجمالي</th></tr></thead>
