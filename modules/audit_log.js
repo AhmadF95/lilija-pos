@@ -58,19 +58,19 @@
     // بناء الهيكل عند أول مرة
     if (!panel.querySelector('#auditTable')) {
       panel.innerHTML = `
-        <h2>سجل الحركات</h2>
-        <div class="hint">يسجّل جميع الإضافات/التعديلات/الحذف مع اسم المستخدم والوقت.</div>
+        <h2 data-i18n="auditTitle">${getTranslation(getUISettings?.().language || 'ar', 'auditTitle')}</h2>
+        <div class="hint" data-i18n="auditHint">${getTranslation(getUISettings?.().language || 'ar', 'auditHint')}</div>
         <div class="flex" style="gap:8px;margin:8px 0">
-          <input id="auditSearch" placeholder="ابحث بالاسم/النوع/المستخدم..." />
-          <button id="btnAuditExport" type="button">⬇️ تصدير CSV</button>
-          <button id="btnAuditClear" class="btn-danger" type="button">🗑️ مسح السجل</button>
+          <input id="auditSearch" data-i18n-placeholder="auditSearchPlaceholder" placeholder="${getTranslation(getUISettings?.().language || 'ar', 'auditSearchPlaceholder')}" />
+          <button id="btnAuditExport" type="button">${getTranslation(getUISettings?.().language || 'ar', 'btnAuditExport')}</button>
+          <button id="btnAuditClear" class="btn-danger" type="button">${getTranslation(getUISettings?.().language || 'ar', 'btnAuditClear')}</button>
         </div>
         <div class="table-wrap">
           <table id="auditTable">
             <thead>
               <tr>
-                <th>الوقت</th><th>المستخدم</th><th>الوحدة</th>
-                <th>الإجراء</th><th>المعرّف</th><th>الاسم/التفاصيل</th><th>الكمية</th>
+                <th data-i18n="thTime">${getTranslation(getUISettings?.().language || 'ar', 'thTime')}</th><th data-i18n="thUser">${getTranslation(getUISettings?.().language || 'ar', 'thUser')}</th><th data-i18n="thModule">${getTranslation(getUISettings?.().language || 'ar', 'thModule')}</th>
+                <th data-i18n="thAction">${getTranslation(getUISettings?.().language || 'ar', 'thAction')}</th><th data-i18n="thRefId">${getTranslation(getUISettings?.().language || 'ar', 'thRefId')}</th><th data-i18n="thDetails">${getTranslation(getUISettings?.().language || 'ar', 'thDetails')}</th><th data-i18n="thQty">${getTranslation(getUISettings?.().language || 'ar', 'thQty')}</th>
               </tr>
             </thead>
             <tbody></tbody>
@@ -125,8 +125,8 @@
     // مسح السجل
     const btnClr = panel.querySelector('#btnAuditClear');
     if (btnClr) btnClr.onclick = () => {
-      if (window.can && !can('audit', 'delete')) return alert('غير مسموح');
-      if (!confirm('مسح كامل السجل؟')) return;
+      if (window.can && !can('audit', 'delete')) return alert(getTranslation(getUISettings?.().language || 'ar', 'auditNoPermission'));
+      if (!confirm(getTranslation(getUISettings?.().language || 'ar', 'auditClearConfirm'))) return;
       window.db.audit = [];
       if (typeof saveDB === 'function') saveDB(window.db);
       renderAudit();

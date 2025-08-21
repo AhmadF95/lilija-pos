@@ -732,7 +732,65 @@ function nextPo(){
       thSettings: 'الإعدادات',
       thAudit: 'سجل الحركات',
       btnDelete: 'حذف',
-      rootAdminLabel: 'أدمن رئيسي'
+      rootAdminLabel: 'أدمن رئيسي',
+      
+      // Additional common action buttons
+      btnEdit: 'تعديل',
+      btnView: 'عرض',
+      btnInvoice: 'فاتورة',
+      
+      // Purchases section - missing keys
+      supplierNamePlaceholder: 'اسم المورد (اختياري)',
+      supplierPhonePlaceholder: 'رقم المورد (اختياري)',
+      purchaseDraftTitle: 'مسودة فاتورة المشتريات',
+      nextPOLabel: 'PO القادم:',
+      btnSaveInvoice: '💾 حفظ الفاتورة',
+      btnPrintDraft: '🖨️ طباعة المسودة',
+      btnClearDraft: 'مسح المسودة',
+      confirmClearDraft: 'مسح المسودة؟',
+      printDraftTitle: 'مسودة فاتورة مشتريات',
+      supplierLabel: 'المورّد',
+      phoneLabel: 'هاتف',
+      
+      // User management messages
+      usersHintRoot: 'الأدمن الرئيسي فقط يمكنه إنشاء المستخدمين.',
+      usersHintView: 'عرض فقط',
+      btnCreateUser: '➕ إنشاء مستخدم جديد',
+      permView: 'رؤية',
+      permEdit: 'تعديل',
+      permDelete: 'حذف',
+      promptUsername: 'اسم المستخدم؟',
+      promptPassword: 'كلمة المرور؟',
+      alertMaxUsers: 'بلغت الحد الأقصى 5 مستخدمين',
+      alertUsernameExists: 'الاسم موجود',
+      alertCannotDeleteSelf: 'لا يمكن حذف الحساب الحالي',
+      alertMustKeepOneAdmin: 'يجب أن يبقى حساب أدمن واحد على الأقل',
+      
+      // Delete confirmation
+      deleteConfirmTitle: 'حذف «{name}» من {module}؟',
+      deleteReasonPrompt: 'سبب الحذف (اختياري):',
+      alertNoDeletePermission: 'غير مسموح بالحذف لهذه الوحدة',
+      
+      // Audit log section - all labels
+      auditSearchPlaceholder: 'ابحث بالاسم/النوع/المستخدم...',
+      btnAuditExport: '⬇️ تصدير CSV',
+      btnAuditClear: '🗑️ مسح السجل',
+      auditClearConfirm: 'مسح كامل السجل؟',
+      auditNoPermission: 'غير مسموح',
+      thTime: 'الوقت',
+      thUser: 'المستخدم',
+      thModule: 'الوحدة',
+      thAction: 'الإجراء',
+      thRefId: 'المعرّف',
+      thDetails: 'الاسم/التفاصيل',
+      thQty: 'الكمية',
+      
+      // Additional table headers for purchases draft
+      thUnitCostDraft: 'تكلفة الوحدة',
+      
+      // Users table headers
+      thUsername: 'المستخدم',
+      thType: 'النوع'
     },
     en: {
       // Document title
@@ -893,7 +951,65 @@ function nextPo(){
       thSettings: 'Settings',
       thAudit: 'Audit Log',
       btnDelete: 'Delete',
-      rootAdminLabel: 'Root Admin'
+      rootAdminLabel: 'Root Admin',
+      
+      // Additional common action buttons
+      btnEdit: 'Edit',
+      btnView: 'View',
+      btnInvoice: 'Invoice',
+      
+      // Purchases section - missing keys  
+      supplierNamePlaceholder: 'Supplier name (optional)',
+      supplierPhonePlaceholder: 'Supplier phone (optional)',
+      purchaseDraftTitle: 'Purchase Invoice Draft',
+      nextPOLabel: 'Next PO:',
+      btnSaveInvoice: '💾 Save Invoice',
+      btnPrintDraft: '🖨️ Print Draft',
+      btnClearDraft: 'Clear Draft',
+      confirmClearDraft: 'Clear draft?',
+      printDraftTitle: 'Purchase Invoice Draft',
+      supplierLabel: 'Supplier',
+      phoneLabel: 'Phone',
+      
+      // User management messages
+      usersHintRoot: 'Only the root admin can create users.',
+      usersHintView: 'View only',
+      btnCreateUser: '➕ Create New User',
+      permView: 'View',
+      permEdit: 'Edit',
+      permDelete: 'Delete',
+      promptUsername: 'Username?',
+      promptPassword: 'Password?',
+      alertMaxUsers: 'Maximum 5 users reached',
+      alertUsernameExists: 'Username already exists',
+      alertCannotDeleteSelf: 'Cannot delete current account',
+      alertMustKeepOneAdmin: 'Must keep at least one admin account',
+      
+      // Delete confirmation
+      deleteConfirmTitle: 'Delete «{name}» from {module}?',
+      deleteReasonPrompt: 'Reason for deletion (optional):',
+      alertNoDeletePermission: 'No permission to delete from this module',
+      
+      // Audit log section - all labels
+      auditSearchPlaceholder: 'Search by name/type/user...',
+      btnAuditExport: '⬇️ Export CSV',
+      btnAuditClear: '🗑️ Clear Log',
+      auditClearConfirm: 'Clear entire log?',
+      auditNoPermission: 'Not allowed',
+      thTime: 'Time',
+      thUser: 'User',
+      thModule: 'Module',
+      thAction: 'Action',
+      thRefId: 'Ref ID',
+      thDetails: 'Name/Details',
+      thQty: 'Quantity',
+      
+      // Additional table headers for purchases draft  
+      thUnitCostDraft: 'Unit Cost',
+      
+      // Users table headers
+      thUsername: 'Username', 
+      thType: 'Type'
     }
   };
 
@@ -980,6 +1096,15 @@ function nextPo(){
     // Update the existing tab rendering and general settings
     renderTabs();
     updateGeneralSettingsLabels();
+    
+    // Refresh dynamic content that uses translations
+    try { 
+      refreshAll(); // Refresh all dynamic content like tables
+      if (typeof renderUsersAdmin === 'function') renderUsersAdmin(); // Refresh users admin
+      if (typeof renderAudit === 'function') renderAudit(); // Refresh audit log
+    } catch (e) {
+      console.warn('Error refreshing dynamic content:', e);
+    }
   }
 
   // Initialize language from localStorage or default to Arabic
@@ -1270,8 +1395,8 @@ function nextPo(){
       <td>${(p.price || 0).toFixed(2)}</td>
       <td>${s.stock || 0}</td>
       <td class="flex">
-        <button data-edit="${p.id}" type="button">تعديل</button>
-        <button data-del="${p.id}" class="btn-danger" type="button">حذف</button>
+        <button data-edit="${p.id}" type="button">${getTranslation(getUISettings().language, 'btnEdit')}</button>
+        <button data-del="${p.id}" class="btn-danger" type="button">${getTranslation(getUISettings().language, 'btnDelete')}</button>
       </td>`;
     tbody.appendChild(tr);
   }
@@ -1371,8 +1496,8 @@ if (poBox && !document.getElementById('supName')) {
   poBox.insertAdjacentHTML('afterbegin', `
     <div id="supFields" class="flex" style="gap:8px;margin-bottom:8px;align-items:center">
       <span id="poPreview" class="tag" title="رقم الطلب القادم">#${db.counters?.nextPo ?? 1001}</span>
-      <input id="supName"  placeholder="اسم المورد (اختياري)" />
-      <input id="supPhone" placeholder="رقم المورد (اختياري)" />
+      <input id="supName" data-i18n-placeholder="supplierNamePlaceholder" placeholder="اسم المورد (اختياري)" />
+      <input id="supPhone" data-i18n-placeholder="supplierPhonePlaceholder" placeholder="رقم المورد (اختياري)" />
     </div>
   `);
 }
@@ -1387,16 +1512,16 @@ if (purchasesSection && !document.getElementById('poDraftBox')){
     <div class="g12">
       <div id="poDraftBox" class="panel" style="margin-top:10px">
       <div class="flex">
-        <strong>مسودة فاتورة المشتريات</strong>
-        <span class="tag" style="margin-inline-start:auto">PO القادم: <span id="poPreview2">#${db.counters?.nextPo ?? 1001}</span></span>
+        <strong data-i18n="purchaseDraftTitle">مسودة فاتورة المشتريات</strong>
+        <span class="tag" style="margin-inline-start:auto"><span data-i18n="nextPOLabel">PO القادم:</span> <span id="poPreview2">#${db.counters?.nextPo ?? 1001}</span></span>
       </div>
       <div class="flex" style="gap:8px;margin:8px 0">
-        <button id="savePO" class="btn-primary" type="button">💾 حفظ الفاتورة</button>
-        <button id="printDraft" class="btn-muted" type="button">🖨️ طباعة المسودة</button>
-        <button id="clearDraft" class="btn-danger" type="button">مسح المسودة</button>
+        <button id="savePO" class="btn-primary" type="button" data-i18n="btnSaveInvoice">💾 حفظ الفاتورة</button>
+        <button id="printDraft" class="btn-muted" type="button" data-i18n="btnPrintDraft">🖨️ طباعة المسودة</button>
+        <button id="clearDraft" class="btn-danger" type="button" data-i18n="btnClearDraft">مسح المسودة</button>
       </div>
       <table id="poDraftTable">
-        <thead><tr><th>المنتج</th><th>الكمية</th><th>تكلفة الوحدة</th><th>الإجمالي</th><th></th></tr></thead>
+        <thead><tr><th data-i18n="thProduct">المنتج</th><th data-i18n="thQuantity">الكمية</th><th data-i18n="thUnitCostDraft">تكلفة الوحدة</th><th data-i18n="thTotal">الإجمالي</th><th></th></tr></thead>
         <tbody></tbody>
         <tfoot><tr><th colspan="3" style="text-align:left">الإجمالي</th><th id="poDraftTotal">0.00</th><th></th></tr></tfoot>
       </table>
@@ -1428,7 +1553,7 @@ renderPurchaseDraft();
       <td>${r.supplier || ''}</td>
       <td>${r.supplierPhone || ''}</td>
       <td>${r.po ? ('#' + r.po) : ''}</td>
-      <td><button data-del="${r.id}" class="btn-danger" type="button">حذف</button></td>
+      <td><button data-del="${r.id}" class="btn-danger" type="button">${getTranslation(getUISettings().language, 'btnDelete')}</button></td>
     `;
     tbody.appendChild(tr);
   }
@@ -1514,7 +1639,7 @@ const btnClear = document.getElementById('clearDraft');
 if (btnClear && !btnClear.__bound){
   btnClear.__bound = true;
   btnClear.onclick = ()=>{
-    if(!confirm('مسح المسودة؟')) return;
+    if(!confirm(getTranslation(getUISettings().language, 'confirmClearDraft'))) return;
     purchaseDraft = [];
     clearSupplierFields(); // Clear supplier fields when clearing draft
     renderPurchaseDraft();
@@ -1566,7 +1691,7 @@ function renderPurchaseDraft(){
     sum += lineTotal;
     const tr = document.createElement('tr');
     tr.innerHTML = `<td>${name}</td><td>${it.qty}</td><td>${(Number(it.unitCost)||0).toFixed(2)}</td><td>${lineTotal.toFixed(2)}</td>
-      <td><button data-rm="${idx}" class="btn-danger" type="button">حذف</button></td>`;
+      <td><button data-rm="${idx}" class="btn-danger" type="button">${getTranslation(getUISettings().language, 'btnDelete')}</button></td>`;
     tbody.appendChild(tr);
   });
 
@@ -1600,17 +1725,17 @@ function printPurchaseDraft(){
   });
   const w = window.open('', '_blank');
   w.document.write(`
-    <html lang="ar" dir="rtl"><head><meta charset="utf-8"><title>مسودة PO</title>
+    <html lang="${getUISettings().language}" dir="${getUISettings().language === 'ar' ? 'rtl' : 'ltr'}"><head><meta charset="utf-8"><title>مسودة PO</title>
     <style>body{font-family:system-ui,Segoe UI,Roboto,Arial;padding:24px}table{width:100%;border-collapse:collapse}th,td{border:1px solid #ccc;padding:8px;text-align:right}</style>
     </head><body>
-      <h2>مسودة فاتورة مشتريات</h2>
-      <div>المورّد: ${sup||'-'} &nbsp; | &nbsp; هاتف: ${tel||'-'}</div>
+      <h2>${getTranslation(getUISettings().language, 'printDraftTitle')}</h2>
+      <div>${getTranslation(getUISettings().language, 'supplierLabel')}: ${sup||'-'} &nbsp; | &nbsp; ${getTranslation(getUISettings().language, 'phoneLabel')}: ${tel||'-'}</div>
       <hr>
-      <table><thead><tr><th>المنتج</th><th>الكمية</th><th>تكلفة الوحدة</th><th>الإجمالي</th></tr></thead>
+      <table><thead><tr><th>${getTranslation(getUISettings().language, 'thProduct')}</th><th>${getTranslation(getUISettings().language, 'thQuantity')}</th><th>${getTranslation(getUISettings().language, 'thUnitCostDraft')}</th><th>${getTranslation(getUISettings().language, 'thTotal')}</th></tr></thead>
       <tbody>${rows}</tbody>
-      <tfoot><tr><th colspan="3" style="text-align:left">الإجمالي</th><th>${sub.toFixed(2)}</th></tr></tfoot>
+      <tfoot><tr><th colspan="3" style="text-align:left">${getTranslation(getUISettings().language, 'thTotal')}</th><th>${sub.toFixed(2)}</th></tr></tfoot>
       </table>
-      <div style="margin-top:12px"><button onclick="window.print()">🖨️ طباعة / PDF</button></div>
+      <div style="margin-top:12px"><button onclick="window.print()">${getTranslation(getUISettings().language, 'btnPrintDraft')}</button></div>
     </body></html>`);
   w.document.close();
 }
@@ -1672,7 +1797,7 @@ function printPurchaseByPO(po){
       const tr = document.createElement('tr');
       const discLabel = it.discountType==='amount' ? `${(Number(it.discountValue)||0).toFixed(2)} AED` : (it.discountType==='percent'? `${(Number(it.discountValue)||0).toFixed(2)}%` : '—');
       tr.innerHTML = `<td>${pmap.get(it.productId)?.name||'—'}</td><td>${it.qty}</td><td>${(Number(it.unitPrice)||0).toFixed(2)}</td><td>${discLabel}</td><td>${lt.toFixed(2)}</td>
-      <td><button data-del-line="${idx}" class="btn-danger" type="button">حذف</button></td>`;
+      <td><button data-del-line="${idx}" class="btn-danger" type="button">${getTranslation(getUISettings().language, 'btnDelete')}</button></td>`;
       tbody.appendChild(tr);
     });
     const del = Number(deliveryFee?.value)||0;
@@ -1722,7 +1847,7 @@ function printPurchaseByPO(po){
       const customerName = o.customerName || '—';
       const customerPhone = o.customerPhone || '—';
       tr.innerHTML = `<td>${o.date||''}</td><td>${itemCount}</td><td>${total.toFixed(2)}</td><td>${customerName}</td><td>${customerPhone}</td>
-      <td class="flex"><button data-inv="${o.id}" type="button">فاتورة</button><button data-del-order="${o.id}" class="btn-danger" type="button">حذف</button></td>`;
+      <td class="flex"><button data-inv="${o.id}" type="button">${getTranslation(getUISettings().language, 'btnInvoice')}</button><button data-del-order="${o.id}" class="btn-danger" type="button">${getTranslation(getUISettings().language, 'btnDelete')}</button></td>`;
       tbody.appendChild(tr);
     }
     tbody.onclick = async (e)=>{
@@ -1994,15 +2119,17 @@ function printPurchaseByPO(po){
 async function confirmDeleteUniversal(module, id, name = '', extraQty = '') {
   // صلاحيات
   if (typeof can === 'function' && !can(module, 'delete')) {
-    alert('غير مسموح بالحذف لهذه الوحدة');
+    alert(getTranslation(getUISettings().language, 'alertNoDeletePermission'));
     return { ok: false };
   }
 
-  const title = `حذف ${name ? '«' + name + '»' : 'العنصر'} من ${module}?`;
+  const title = getTranslation(getUISettings().language, 'deleteConfirmTitle')
+    .replace('{name}', name ? '«' + name + '»' : 'العنصر')
+    .replace('{module}', module);
   if (!confirm(title)) return { ok: false };
 
   // سبب اختياري
-  const reason = prompt('سبب الحذف (اختياري):') || '';
+  const reason = prompt(getTranslation(getUISettings().language, 'deleteReasonPrompt')) || '';
 
   try {
     if (typeof recordAudit === 'function') {
