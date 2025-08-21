@@ -4,7 +4,7 @@
   if(window.__lilijaUsersAdminLoaded) return; window.__lilijaUsersAdminLoaded = true;
   window.currentUser = window.currentUser || function(){
     const users = (typeof loadUsers==='function'? loadUsers() : []) || [];
-    return users.find(u=>u.username===window.CURRENT_USER) || null;
+    return users.find(u=>u.username===window.currentUser) || null;
   };
   window.can = window.can || function(module, action){
     const u = window.currentUser? window.currentUser() : null;
@@ -95,7 +95,7 @@
       wrap.onclick=(e)=>{
         const rm=e.target.getAttribute('data-remove');
         if(rm){
-          if(rm===window.CURRENT_USER) return alert('لا يمكن حذف الحساب الحالي');
+          if(rm===window.currentUser) return alert('لا يمكن حذف الحساب الحالي');
           const list=loadUsers(); const u=list.find(x=>x.username===rm); if(u?.isRoot) return;
           const next=list.filter(x=>x.username!==rm);
           const adminCount=next.filter(x=>x.type==='admin'||x.isRoot===true).length;

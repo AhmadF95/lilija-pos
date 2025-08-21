@@ -375,7 +375,7 @@
     wrap.onclick = (e)=>{
       const rm = e.target.getAttribute('data-remove');
       if(rm){
-        if(rm===CURRENT_USER) return alert('لا يمكن حذف الحساب الحالي');
+        if(rm===currentUser) return alert('لا يمكن حذف الحساب الحالي');
         const list = loadUsers(); const u = list.find(x=>x.username===rm); if(u?.isRoot) return;
         const next = list.filter(x=>x.username!==rm);
         const adminCount = next.filter(x => x.type==='admin' || x.isRoot===true).length;
@@ -459,9 +459,9 @@ function nextPo(){
 // ====== Auth & DB Keys ======
   const USERS_KEY = 'miniStoreUsers_v1';
   const SESSION_KEY = 'miniStoreSession_v1';
-  let CURRENT_USER = null;
-  let DB_KEY_BASE = 'miniStoreDB_v3_orders';
-  let DB_KEY = DB_KEY_BASE;
+  let currentUser = null;
+  let dbKeyBase = 'miniStoreDB_v3_orders';
+  let dbKey = dbKeyBase;
 
   // ====== Crypto helpers ======
   const enc = new TextEncoder();
@@ -479,8 +479,8 @@ function nextPo(){
   const uid = () => Math.random().toString(36).slice(2,9);
   const deepClone = (o)=> JSON.parse(JSON.stringify(o));
   const defaults = { products: [], purchases: [], sales: [], settings: { lowStockThreshold: 5 }, audit: [] };
-  function loadDB(){ try{ return JSON.parse(localStorage.getItem(DB_KEY)) || deepClone(defaults);}catch{ return deepClone(defaults); } }
-  function saveDB(db){ localStorage.setItem(DB_KEY, JSON.stringify(db)); }
+  function loadDB(){ try{ return JSON.parse(localStorage.getItem(dbKey)) || deepClone(defaults);}catch{ return deepClone(defaults); } }
+  function saveDB(db){ localStorage.setItem(dbKey, JSON.stringify(db)); }
   let db = null;
   window.db = db;
 
@@ -532,8 +532,8 @@ function nextPo(){
   // ====== Roles & Permissions ======
   const MODULES = ['products','purchases','sales','dashboard','users','settings','audit'];
   const ACTIONS = ['view','edit','delete'];
-  function currentUser(){
-    const users = loadUsers() || []; return users.find(u=>u.username===CURRENT_USER) || null;
+  function getCurrentUser(){
+    const users = loadUsers() || []; return users.find(u=>u.username===currentUser) || null;
   }
   function ensureUserSchema(){
     let users = loadUsers(); if(!Array.isArray(users)) users = [];
@@ -550,7 +550,7 @@ function nextPo(){
     if(changed) saveUsers(users);
   }
   function can(module, action){
-    const u = currentUser();
+    const u = getCurrentUser();
     if(!u) return false;
     if(u.isRoot===true || u.type==='admin') return true;
     return Boolean(u.perms && u.perms[module] && u.perms[module][action]);
@@ -566,11 +566,11 @@ function nextPo(){
       if(id==='audit' && typeof renderAudit==='function') renderAudit();
       if(id==='dashboard' && typeof renderDashboard==='function') renderDashboard();
     });
-    localStorage.setItem(DB_KEY+':tab', id);
+    localStorage.setItem(dbKey+':tab', id);
     refreshAll();
   }
   tabsEl.addEventListener('click', (e)=>{ if(e.target.classList.contains('tab')) activateTab(e.target.dataset.tab); });
-  function getLastTab(){ return localStorage.getItem(DB_KEY+':tab') || 'products'; }
+  function getLastTab(){ return localStorage.getItem(dbKey+':tab') || 'products'; }
 
   // ====== Products ======
   const pName = document.getElementById('pName');
@@ -1504,8 +1504,8 @@ async function confirmDeleteUniversal(module, id, name = '', extraQty = '') {
   }
 
   async function startApp(username){
-    CURRENT_USER = username;
-    DB_KEY = DB_KEY_BASE; try { const legacy = localStorage.getItem(DB_KEY_BASE + ':' + username); if(legacy && !localStorage.getItem(DB_KEY)) localStorage.setItem(DB_KEY, legacy); } catch(e){}
+    currentUser = username;
+    dbKey = dbKeyBase; try { const legacy = localStorage.getItem(dbKeyBase + ':' + username); if(legacy && !localStorage.getItem(dbKey)) localStorage.setItem(dbKey, legacy); } catch(e){}
     db = loadDB();
     window.db = db;
     whoami.textContent = 'المستخدم: ' + username;
@@ -1521,7 +1521,7 @@ async function confirmDeleteUniversal(module, id, name = '', extraQty = '') {
     const n2 = document.getElementById('newPass2').value;
     if(!n1 || n1 !== n2) return alert('تحقق من كلمة المرور الجديدة والتأكيد');
     const users = loadUsers();
-    const rec = users.find(x=>x.username===CURRENT_USER);
+    const rec = users.find(x=>x.username===currentUser);
     if(!rec) return alert('حساب غير موجود');
     const hcur = await sha256(cur + rec.salt);
     if(hcur !== rec.hash) return alert('كلمة المرور الحالية غير صحيحة');

@@ -18,7 +18,7 @@
       if (!window.db || typeof window.db !== 'object') return;
       if (!Array.isArray(window.db.audit)) window.db.audit = [];
 
-      const me = window.CURRENT_USER || 'unknown';
+      const me = window.currentUser || 'unknown';
       const id = (typeof uid === 'function') ? uid() : Math.random().toString(36).slice(2);
 
       window.db.audit.unshift({
