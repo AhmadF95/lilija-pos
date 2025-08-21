@@ -5,42 +5,58 @@
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
   <title>ليليجة — إدارة المتجر (v1.1.0)</title>
   <style>
+    /* Dark theme (default) */
     :root{--bg:#0f172a;--panel:#111827;--muted:#1f2937;--text:#e5e7eb;--accent:#22d3ee;--ok:#22c55e;--warn:#f59e0b;--danger:#ef4444}
+    
+    /* Light theme */
+    :root[data-theme='light']{
+      --bg:#f6f7fb;--panel:#ffffff;--muted:#e5e7eb;--text:#0b1023;--accent:var(--accent-color, #0ea5e9);
+      --ok:#16a34a;--warn:#ca8a04;--danger:#dc2626;
+    }
+    
     *{box-sizing:border-box;font-family:system-ui,Segoe UI,Roboto,Arial}
-    body{margin:0;background:linear-gradient(180deg,#0b1023,#0a0f1c);color:var(--text)}
-    header{position:sticky;top:0;background:#0b1023cc;backdrop-filter:blur(6px);z-index:10;border-bottom:1px solid #1e293b}
+    body{margin:0;background:linear-gradient(180deg,var(--bg),var(--muted));color:var(--text)}
+    header{position:sticky;top:0;background:var(--bg)cc;backdrop-filter:blur(6px);z-index:10;border-bottom:1px solid var(--muted)}
     .wrap{max-width:1100px;margin:auto;padding:16px}
     h1{margin:0;font-size:20px;display:flex;align-items:center;gap:10px}
     h2{margin:16px 0 8px}
     .tabs{display:flex;gap:8px;flex-wrap:wrap;margin-top:10px}
-    .tab{padding:8px 12px;border:1px solid #334155;border-radius:10px;background:#0b1224;cursor:pointer}
-    .tab.active{border-color:var(--accent);box-shadow:0 0 0 2px #22d3ee22}
-    .panel{background:#0b1224;border:1px solid #1f2a44;border-radius:14px;padding:14px;margin-top:14px}
+    .tab{padding:8px 12px;border:1px solid var(--muted);border-radius:10px;background:var(--panel);cursor:pointer}
+    .tab.active{border-color:var(--accent);box-shadow:0 0 0 2px var(--accent)22}
+    .panel{background:var(--panel);border:1px solid var(--muted);border-radius:14px;padding:14px;margin-top:14px}
     label{display:block;margin:8px 0 4px}
-    input,select{width:100%;padding:9px 10px;border-radius:10px;border:1px solid #334155;background:#0a142b;color:var(--text)}
+    input,select{width:100%;padding:9px 10px;border-radius:10px;border:1px solid var(--muted);background:var(--bg);color:var(--text)}
     .grid{display:grid;grid-template-columns:repeat(12,1fr);gap:12px}
     .g6{grid-column:span 6}.g4{grid-column:span 4}.g3{grid-column:span 3}.g8{grid-column:span 8}.g12{grid-column:span 12}
     @media(max-width:900px){.g6,.g4,.g3,.g8{grid-column:span 12}}
-    button{padding:10px 14px;border-radius:10px;border:1px solid #334155;background:#101a34;color:var(--text);cursor:pointer}
-    .btn-primary{background:linear-gradient(90deg,#06b6d4,#22d3ee);color:#0b1023;border:none}
-    .btn-danger{background:#2a0a0a;border:1px solid #7f1d1d}
-    .btn-muted{background:#0b1224;border:1px solid #334155}
+    button{padding:10px 14px;border-radius:10px;border:1px solid var(--muted);background:var(--panel);color:var(--text);cursor:pointer}
+    .btn-primary{background:linear-gradient(90deg,var(--accent),var(--accent));color:var(--panel);border:none}
+    .btn-danger{background:var(--danger);border:1px solid var(--danger);color:white}
+    .btn-muted{background:var(--panel);border:1px solid var(--muted)}
     table{width:100%;border-collapse:collapse;margin-top:10px}
-    th,td{border-bottom:1px dashed #25324d;padding:10px;text-align:right}
-    tr:hover{background:#0c1530}
+    th,td{border-bottom:1px dashed var(--muted);padding:10px;text-align:right}
+    tr:hover{background:var(--muted)}
     .kpis{display:grid;grid-template-columns:repeat(4,1fr);gap:12px}
-    .kpi{border:1px solid #20304e;background:#0b1224;border-radius:14px;padding:12px}
-    .tag{display:inline-block;padding:2px 8px;border-radius:20px;font-size:12px;border:1px solid #32435f}
-    .tag.warn{border-color:#8b5cf6;color:#e9d5ff}
-    .tag.danger{border-color:#ef4444;color:#fecaca}
-    .tag.ok{border-color:#22c55e;color:#bbf7d0}
+    .kpi{border:1px solid var(--muted);background:var(--panel);border-radius:14px;padding:12px}
+    .tag{display:inline-block;padding:2px 8px;border-radius:20px;font-size:12px;border:1px solid var(--muted)}
+    .tag.warn{border-color:var(--warn);color:var(--warn)}
+    .tag.danger{border-color:var(--danger);color:var(--danger)}
+    .tag.ok{border-color:var(--ok);color:var(--ok)}
     .flex{display:flex;gap:10px;align-items:center;flex-wrap:wrap}
     .right{margin-inline-start:auto}
     .hint{font-size:12px;opacity:.75}
 
+    /* General Settings specific styles */
+    .color-swatches{display:flex;gap:8px;flex-wrap:wrap;margin-top:8px}
+    .color-swatch{width:24px;height:24px;border-radius:6px;cursor:pointer;border:2px solid transparent}
+    .color-swatch:hover,.color-swatch.selected{border-color:var(--text)}
+    .shop-logo-preview{max-height:40px;margin-top:8px;border-radius:6px}
+    .shop-logo-controls{display:flex;gap:8px;margin-top:8px;align-items:center}
+    #shopLogoImg{height:20px;border-radius:4px;margin-inline-end:8px}
+
     /* Auth overlay */
-    .overlay{position:fixed;inset:0;background:#0b1023f0;backdrop-filter:blur(3px);display:flex;align-items:center;justify-content:center;z-index:9999}
-    .card{width:min(94vw,420px);background:#0b1224;border:1px solid #20304e;border-radius:14px;padding:18px}
+    .overlay{position:fixed;inset:0;background:var(--bg)f0;backdrop-filter:blur(3px);display:flex;align-items:center;justify-content:center;z-index:9999}
+    .card{width:min(94vw,420px);background:var(--panel);border:1px solid var(--muted);border-radius:14px;padding:18px}
     .card h3{margin:0 0 8px 0}
     .is-hidden{display:none !important;visibility:hidden !important;opacity:0 !important}
   </style>
@@ -48,7 +64,12 @@
 <body>
   <header>
     <div class="wrap flex">
-      <h1><svg id="logoLilija" viewBox="0 0 200 200" width="20" height="20" aria-hidden="true" style="vertical-align:-3px;margin-inline-end:6px"><circle cx="100" cy="100" r="88" fill="none" stroke="#e6eef9" stroke-width="12"/><path d="M60 60 v50 c0 25 20 35 40 35 h35" fill="none" stroke="#e6eef9" stroke-width="12" stroke-linecap="round"/><rect x="86" y="132" width="14" height="14" rx="3" fill="#e6eef9"/><rect x="112" y="132" width="14" height="14" rx="3" fill="#e6eef9"/></svg>ليليجة — إدارة المتجر (v1.1.0) <small id="bootChecks" class="hint" style="font-weight:normal;font-size:12px;opacity:.8"></small></h1>
+      <h1>
+        <img id="shopLogoImg" style="display:none" alt="Shop Logo" />
+        <svg id="logoLilija" viewBox="0 0 200 200" width="20" height="20" aria-hidden="true" style="vertical-align:-3px;margin-inline-end:6px"><circle cx="100" cy="100" r="88" fill="none" stroke="#e6eef9" stroke-width="12"/><path d="M60 60 v50 c0 25 20 35 40 35 h35" fill="none" stroke="#e6eef9" stroke-width="12" stroke-linecap="round"/><rect x="86" y="132" width="14" height="14" rx="3" fill="#e6eef9"/><rect x="112" y="132" width="14" height="14" rx="3" fill="#e6eef9"/></svg>
+        <span id="shopNameSpan">ليليجة — إدارة المتجر (v1.1.0)</span> 
+        <small id="bootChecks" class="hint" style="font-weight:normal;font-size:12px;opacity:.8"></small>
+      </h1>
       <div class="right flex">
         <span id="whoami" class="hint"></span>
         <button id="btnLogout" class="btn-muted" type="button" hidden>🚪 تسجيل خروج</button>
@@ -281,12 +302,58 @@
     
       <!-- LILIJA:BEGIN USERS_ADMIN -->
 <div id="usersAdminSection">
-        <hr style="border-color:#1f2a44;margin:18px 0" />
+        <hr style="border-color:var(--muted);margin:18px 0" />
         <h3>المستخدمون والصلاحيات</h3>
         <div id="usersAdminWrap"></div>
       </div>
 <!-- LILIJA:END USERS_ADMIN -->
 </section>
+
+    <!-- General Settings -->
+    <section class="panel" data-tab="general" hidden>
+      <h2 id="generalSettingsTitle">⚙️ الإعدادات العامة</h2>
+      <div class="grid">
+        <div class="g6">
+          <label id="languageLabel">🌐 اللغة</label>
+          <select id="uiLanguage">
+            <option value="ar">العربية</option>
+            <option value="en">English</option>
+          </select>
+          
+          <label id="themeLabel">🎨 نمط العرض</label>
+          <select id="uiTheme">
+            <option value="dark">ليلي (داكن)</option>
+            <option value="light">نهاري (فاتح)</option>
+          </select>
+          
+          <label id="accentLabel">🎯 اللون المميز</label>
+          <input type="color" id="uiAccent" value="#22d3ee" style="width:60px;height:40px;padding:2px;border-radius:8px" />
+          <div class="color-swatches">
+            <div class="color-swatch" style="background:#22d3ee" data-color="#22d3ee" title="سماوي"></div>
+            <div class="color-swatch" style="background:#39ff14" data-color="#39ff14" title="أخضر نيون"></div>
+            <div class="color-swatch" style="background:#ff00ff" data-color="#ff00ff" title="بنفسجي نيون"></div>
+            <div class="color-swatch" style="background:#00ffff" data-color="#00ffff" title="أزرق نيون"></div>
+            <div class="color-swatch" style="background:#ff5f1f" data-color="#ff5f1f" title="برتقالي نيون"></div>
+            <div class="color-swatch" style="background:#8a2be2" data-color="#8a2be2" title="بنفسجي"></div>
+          </div>
+          <div class="hint" id="accentHint">انقر على أحد الألوان أو اختر لون مخصص</div>
+        </div>
+        
+        <div class="g6">
+          <label id="shopNameLabel">🏪 اسم المتجر</label>
+          <input type="text" id="shopName" placeholder="اسم متجرك" />
+          <div class="hint" id="shopNameHint">سيظهر في رأس الصفحة</div>
+          
+          <label id="shopLogoLabel">🖼️ شعار المتجر</label>
+          <input type="file" id="shopLogoFile" accept="image/*" />
+          <div class="shop-logo-controls">
+            <button type="button" id="removeLogoBtn" class="btn-muted" style="display:none" id="removeLogoHint">🗑️ إزالة الشعار</button>
+          </div>
+          <img id="shopLogoPreview" class="shop-logo-preview" style="display:none" alt="معاينة الشعار" />
+          <div class="hint" id="shopLogoHint">اختر صورة لشعار متجرك (PNG, JPG)</div>
+        </div>
+      </div>
+    </section>
 <!-- LILIJA:BEGIN AUDIT_LOG -->
 <section class="panel" data-tab="audit" hidden>
   <h2>سجل الحركات</h2>
@@ -482,7 +549,7 @@ function nextPo(){
   const nowISO = () => new Date().toISOString().slice(0,10);
   const uid = () => Math.random().toString(36).slice(2,9);
   const deepClone = (o)=> JSON.parse(JSON.stringify(o));
-  const defaults = { products: [], purchases: [], sales: [], settings: { lowStockThreshold: 5 }, audit: [] };
+  const defaults = { products: [], purchases: [], sales: [], settings: { lowStockThreshold: 5, ui: { language: 'ar', theme: 'dark', accent: '#22d3ee', shopName: '', shopLogo: '' } }, audit: [] };
   function loadDB(){ try{ return JSON.parse(localStorage.getItem(dbKey)) || deepClone(defaults);}catch{ return deepClone(defaults); } }
   function saveDB(db){ localStorage.setItem(dbKey, JSON.stringify(db)); }
   
@@ -504,6 +571,54 @@ function nextPo(){
   
   window.db = db;
 
+  // ====== i18n Support (minimal) ======
+  const i18n = {
+    ar: {
+      // Tab labels
+      products: '📦 المنتجات',
+      purchases: '⬅️ المشتريات', 
+      sales: '➡️ المبيعات (طلبات)',
+      dashboard: '📊 لوحة العرض',
+      reports: '📈 التقارير',
+      settings: '⚙️ الإعدادات',
+      audit: '📝 سجل الحركات',
+      general: '⚙️ الإعدادات العامة',
+      // General settings
+      generalSettingsTitle: '⚙️ الإعدادات العامة',
+      languageLabel: '🌐 اللغة',
+      themeLabel: '🎨 نمط العرض',
+      accentLabel: '🎯 اللون المميز',
+      shopNameLabel: '🏪 اسم المتجر',
+      shopLogoLabel: '🖼️ شعار المتجر',
+      accentHint: 'انقر على أحد الألوان أو اختر لون مخصص',
+      shopNameHint: 'سيظهر في رأس الصفحة',
+      shopLogoHint: 'اختر صورة لشعار متجرك (PNG, JPG)',
+      removeLogoHint: '🗑️ إزالة الشعار'
+    },
+    en: {
+      // Tab labels  
+      products: '📦 Products',
+      purchases: '⬅️ Purchases',
+      sales: '➡️ Sales (Orders)', 
+      dashboard: '📊 Dashboard',
+      reports: '📈 Reports',
+      settings: '⚙️ Settings',
+      audit: '📝 Audit Log',
+      general: '⚙️ General Settings',
+      // General settings
+      generalSettingsTitle: '⚙️ General Settings',
+      languageLabel: '🌐 Language',
+      themeLabel: '🎨 Theme Mode',
+      accentLabel: '🎯 Accent Color',
+      shopNameLabel: '🏪 Shop Name', 
+      shopLogoLabel: '🖼️ Shop Logo',
+      accentHint: 'Click on a color swatch or choose custom',
+      shopNameHint: 'Will appear in the header',
+      shopLogoHint: 'Choose an image for your shop logo (PNG, JPG)',
+      removeLogoHint: '🗑️ Remove Logo'
+    }
+  };
+
   // ====== Helpers ======
   // Note: productMap, sum, calcStats moved to modules/utils.js and modules/data.js
 
@@ -514,19 +629,164 @@ function nextPo(){
     {id:'sales', label:'➡️ المبيعات (طلبات)'},
     {id:'dashboard', label:'📊 لوحة العرض'},
     {id:'reports', label:'📈 التقارير'},
+    {id:'general', label:'⚙️ الإعدادات العامة'},
     {id:'settings', label:'⚙️ الإعدادات'},
     {id:'audit', label:'📝 سجل الحركات'},
   ];
   
   // Note: Auth & permissions moved to modules/auth.js
 
+  // ====== UI Settings Functions ======
+  function getUISettings() {
+    if (!db || !db.settings) return { language: 'ar', theme: 'dark', accent: '#22d3ee', shopName: '', shopLogo: '' };
+    if (!db.settings.ui) {
+      db.settings.ui = { language: 'ar', theme: 'dark', accent: '#22d3ee', shopName: '', shopLogo: '' };
+    }
+    return db.settings.ui;
+  }
+
+  function saveUISettings(settings) {
+    if (!db.settings.ui) db.settings.ui = {};
+    Object.assign(db.settings.ui, settings);
+    saveDB(db);
+  }
+
+  function applyUISettings() {
+    const ui = getUISettings();
+    
+    // Apply language and direction
+    document.documentElement.lang = ui.language;
+    document.documentElement.dir = ui.language === 'ar' ? 'rtl' : 'ltr';
+    
+    // Apply theme
+    document.documentElement.setAttribute('data-theme', ui.theme);
+    
+    // Apply accent color
+    document.documentElement.style.setProperty('--accent-color', ui.accent);
+    document.documentElement.style.setProperty('--accent', ui.accent);
+    
+    // Update header logo and name
+    const shopLogoImg = document.getElementById('shopLogoImg');
+    const logoLilija = document.getElementById('logoLilija');
+    const shopNameSpan = document.getElementById('shopNameSpan');
+    
+    if (ui.shopLogo) {
+      shopLogoImg.src = ui.shopLogo;
+      shopLogoImg.style.display = 'inline';
+      logoLilija.style.display = 'none';
+    } else {
+      shopLogoImg.style.display = 'none';
+      logoLilija.style.display = 'inline';
+    }
+    
+    if (ui.shopName) {
+      shopNameSpan.textContent = ui.shopName;
+    } else {
+      shopNameSpan.textContent = ui.language === 'ar' ? 'ليليجة — إدارة المتجر (v1.1.0)' : 'Lilija — Store Manager (v1.1.0)';
+    }
+    
+    // Update tab labels
+    renderTabs();
+    
+    // Update general settings labels
+    updateGeneralSettingsLabels();
+  }
+
+  function renderTabs() {
+    const ui = getUISettings();
+    const lang = ui.language;
+    const tabsEl = document.getElementById('tabs');
+    if (!tabsEl) return;
+    
+    // Clear existing tabs
+    tabsEl.innerHTML = '';
+    
+    // Recreate tabs with current language labels
+    tabsCfg.forEach(t => {
+      const b = document.createElement('button');
+      b.className = 'tab';
+      b.textContent = i18n[lang][t.id] || t.label;
+      b.dataset.tab = t.id;
+      tabsEl.appendChild(b);
+    });
+  }
+
+  function updateGeneralSettingsLabels() {
+    const ui = getUISettings();
+    const lang = ui.language;
+    
+    // Update general settings labels
+    const elements = {
+      generalSettingsTitle: document.getElementById('generalSettingsTitle'),
+      languageLabel: document.getElementById('languageLabel'),
+      themeLabel: document.getElementById('themeLabel'),
+      accentLabel: document.getElementById('accentLabel'),
+      shopNameLabel: document.getElementById('shopNameLabel'),
+      shopLogoLabel: document.getElementById('shopLogoLabel'),
+      accentHint: document.getElementById('accentHint'),
+      shopNameHint: document.getElementById('shopNameHint'),
+      shopLogoHint: document.getElementById('shopLogoHint'),
+      removeLogoHint: document.getElementById('removeLogoBtn')
+    };
+    
+    Object.keys(elements).forEach(key => {
+      if (elements[key] && i18n[lang][key]) {
+        if (key === 'removeLogoHint') {
+          elements[key].textContent = i18n[lang][key];
+        } else {
+          elements[key].textContent = i18n[lang][key];
+        }
+      }
+    });
+  }
+
+  function renderGeneralSettings() {
+    const ui = getUISettings();
+    
+    // Set current values
+    document.getElementById('uiLanguage').value = ui.language;
+    document.getElementById('uiTheme').value = ui.theme;
+    document.getElementById('uiAccent').value = ui.accent;
+    document.getElementById('shopName').value = ui.shopName || '';
+    
+    // Update logo preview
+    const preview = document.getElementById('shopLogoPreview');
+    const removeBtn = document.getElementById('removeLogoBtn');
+    
+    if (ui.shopLogo) {
+      preview.src = ui.shopLogo;
+      preview.style.display = 'block';
+      removeBtn.style.display = 'inline-block';
+    } else {
+      preview.style.display = 'none';
+      removeBtn.style.display = 'none';
+    }
+    
+    // Update accent color swatch selection
+    updateAccentSwatches();
+    
+    // Update labels
+    updateGeneralSettingsLabels();
+  }
+
+  function updateAccentSwatches() {
+    const ui = getUISettings();
+    const swatches = document.querySelectorAll('.color-swatch');
+    swatches.forEach(swatch => {
+      swatch.classList.toggle('selected', swatch.dataset.color === ui.accent);
+    });
+  }
+
   const tabsEl = document.getElementById('tabs');
-  tabsCfg.forEach(t=>{ const b = document.createElement('button'); b.className='tab'; b.textContent=t.label; b.dataset.tab=t.id; tabsEl.appendChild(b); });
+  // Initial tab rendering (will be updated by applyUISettings)
+  tabsCfg.forEach(t=>{ const b = document.createElement('button'); b.className='tab'; b.textContent=t.label; b.dataset.tab=t.id; if(tabsEl) tabsEl.appendChild(b); });
+  
   function activateTab(id){
     document.querySelectorAll('.tab').forEach(b=>b.classList.toggle('active', b.dataset.tab===id));
     document.querySelectorAll('section.panel').forEach(s=>{ 
       s.hidden = s.dataset.tab!==id; 
       if(id==='settings' && typeof renderUsersAdmin==='function') renderUsersAdmin(); 
+      if(id==='general') renderGeneralSettings();
       if(id==='audit' && typeof renderAudit==='function') renderAudit();
       if(id==='dashboard' && typeof renderDashboard==='function') renderDashboard();
     });
@@ -1527,6 +1787,7 @@ async function confirmDeleteUniversal(module, id, name = '', extraQty = '') {
     whoami.textContent = 'المستخدم: ' + username;
     btnLogout.hidden = false;
     hideAuth();
+    applyUISettings(); // Apply UI settings on startup
     activateTab(getLastTab());
   }
 
@@ -1547,6 +1808,91 @@ async function confirmDeleteUniversal(module, id, name = '', extraQty = '') {
     alert('تم تغيير كلمة المرور');
     document.getElementById('curPass').value = document.getElementById('newPass').value = document.getElementById('newPass2').value = '';
   };
+
+  // ====== General Settings Event Handlers ======
+  // Language change
+  document.addEventListener('DOMContentLoaded', () => {
+    const uiLanguage = document.getElementById('uiLanguage');
+    const uiTheme = document.getElementById('uiTheme');
+    const uiAccent = document.getElementById('uiAccent');
+    const shopName = document.getElementById('shopName');
+    const shopLogoFile = document.getElementById('shopLogoFile');
+    const removeLogoBtn = document.getElementById('removeLogoBtn');
+    
+    if (uiLanguage) {
+      uiLanguage.onchange = () => {
+        const ui = getUISettings();
+        ui.language = uiLanguage.value;
+        saveUISettings(ui);
+        applyUISettings();
+      };
+    }
+    
+    if (uiTheme) {
+      uiTheme.onchange = () => {
+        const ui = getUISettings();
+        ui.theme = uiTheme.value;
+        saveUISettings(ui);
+        applyUISettings();
+      };
+    }
+    
+    if (uiAccent) {
+      uiAccent.onchange = () => {
+        const ui = getUISettings();
+        ui.accent = uiAccent.value;
+        saveUISettings(ui);
+        applyUISettings();
+      };
+    }
+    
+    if (shopName) {
+      shopName.onchange = () => {
+        const ui = getUISettings();
+        ui.shopName = shopName.value;
+        saveUISettings(ui);
+        applyUISettings();
+      };
+    }
+    
+    if (shopLogoFile) {
+      shopLogoFile.onchange = (e) => {
+        const file = e.target.files[0];
+        if (file) {
+          const reader = new FileReader();
+          reader.onload = () => {
+            const ui = getUISettings();
+            ui.shopLogo = reader.result;
+            saveUISettings(ui);
+            applyUISettings();
+            renderGeneralSettings();
+          };
+          reader.readAsDataURL(file);
+        }
+      };
+    }
+    
+    if (removeLogoBtn) {
+      removeLogoBtn.onclick = () => {
+        const ui = getUISettings();
+        ui.shopLogo = '';
+        saveUISettings(ui);
+        applyUISettings();
+        renderGeneralSettings();
+      };
+    }
+    
+    // Color swatches
+    document.querySelectorAll('.color-swatch').forEach(swatch => {
+      swatch.onclick = () => {
+        const ui = getUISettings();
+        ui.accent = swatch.dataset.color;
+        document.getElementById('uiAccent').value = ui.accent;
+        saveUISettings(ui);
+        applyUISettings();
+      };
+    });
+  });
 
   // ====== Boot ======
   (async function boot(){
