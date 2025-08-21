@@ -291,12 +291,12 @@
           <div class="hint">يظهر تنبيه "منخفض" عندما يقل رصيد المنتج عن هذا الحد.</div>
         </div>
         <div class="g6">
-          <h3 style="margin-top:0">كلمة المرور</h3>
-          <label>كلمة المرور الحالية</label><input id="curPass" type="password" />
-          <label>كلمة المرور الجديدة</label><input id="newPass" type="password" />
-          <label>تأكيد كلمة المرور الجديدة</label><input id="newPass2" type="password" />
-          <button class="btn-primary" id="btnChangePass" type="button">🔐 تغيير كلمة المرور</button>
-          <div class="hint">تُخزن كلمة المرور بشكل مُشفّر محليًا في متصفحك.</div>
+          <h3 style="margin-top:0" data-i18n="passwordSectionTitle">كلمة المرور</h3>
+          <label data-i18n="currentPasswordLabel">كلمة المرور الحالية</label><input id="curPass" type="password" />
+          <label data-i18n="newPasswordLabel">كلمة المرور الجديدة</label><input id="newPass" type="password" />
+          <label data-i18n="confirmNewPasswordLabel">تأكيد كلمة المرور الجديدة</label><input id="newPass2" type="password" />
+          <button class="btn-primary" id="btnChangePass" type="button" data-i18n="btnChangePassword">🔐 تغيير كلمة المرور</button>
+          <div class="hint" data-i18n="passwordHint">تُخزن كلمة المرور بشكل مُشفّر محليًا في متصفحك.</div>
         </div>
       </div>
     
@@ -817,7 +817,26 @@ function nextPo(){
       
       // Users table headers
       thUsername: 'المستخدم',
-      thType: 'النوع'
+      thType: 'النوع',
+      
+      // Password section
+      passwordSectionTitle: 'كلمة المرور',
+      currentPasswordLabel: 'كلمة المرور الحالية',
+      newPasswordLabel: 'كلمة المرور الجديدة',
+      confirmNewPasswordLabel: 'تأكيد كلمة المرور الجديدة',
+      btnChangePassword: '🔐 تغيير كلمة المرور',
+      passwordHint: 'تُخزن كلمة المرور بشكل مُشفّر محليًا في متصفحك.',
+      
+      // Confirm dialogs
+      confirmLabel: 'تأكيد؟',
+      purchaseSavedPrintPrompt: 'تم الحفظ. هل تريد طباعة الفاتورة الآن؟',
+      
+      // KPI labels
+      kpiInventoryValue: 'قيمة المخزون',
+      kpiSalesRevenue: 'إيرادات المبيعات',
+      kpiDeliveryRevenue: 'إيرادات التوصيل',
+      kpiCOGS: 'تكلفة البضاعة المباعة',
+      kpiProfit: 'الربح الإجمالي (تقديري)'
     },
     en: {
       // Document title
@@ -1063,7 +1082,26 @@ function nextPo(){
       
       // Users table headers
       thUsername: 'Username', 
-      thType: 'Type'
+      thType: 'Type',
+      
+      // Password section  
+      passwordSectionTitle: 'Password',
+      currentPasswordLabel: 'Current Password',
+      newPasswordLabel: 'New Password',
+      confirmNewPasswordLabel: 'Confirm New Password',
+      btnChangePassword: '🔐 Change Password',
+      passwordHint: 'Your password is stored encrypted locally in your browser.',
+      
+      // Confirm dialogs
+      confirmLabel: 'Confirm?',
+      purchaseSavedPrintPrompt: 'Saved. Do you want to print the invoice now?',
+      
+      // KPI labels
+      kpiInventoryValue: 'Inventory value',
+      kpiSalesRevenue: 'Sales revenue',
+      kpiDeliveryRevenue: 'Delivery revenue',
+      kpiCOGS: 'Cost of goods sold',
+      kpiProfit: 'Profit'
     }
   };
 
@@ -1244,7 +1282,7 @@ function nextPo(){
     
     // Update user status text
     const whoami = document.getElementById('whoami');
-    const currentUserName = window.currentUser ? window.currentUser.username || 'unknown' : '';
+    const currentUserName = currentUser || '';
     if (whoami && currentUserName) {
       whoami.textContent = getTranslation(ui.language, 'currentUser') + ' ' + currentUserName;
     }
@@ -1683,7 +1721,7 @@ if (btnSavePO && !btnSavePO.__bound){
     renderPurchaseDraft();
     refreshAll();
     
-    if(confirm('تم الحفظ. هل تريد طباعة الفاتورة الآن؟')){
+    if(confirm(getTranslation(getUISettings().language, 'purchaseSavedPrintPrompt'))){
       printPurchaseByPO(po);
     }
   };
@@ -1996,11 +2034,12 @@ function printPurchaseByPO(po){
 
     const kpis = document.getElementById('kpis'); if(kpis){
       kpis.innerHTML = '';
+      const lang = getUISettings().language;
       const items = [
-        {label:'قيمة المخزون', value: currency(invValue)},
-        {label:'إيرادات المبيعات', value: currency(revenue)},
-        {label:'إيرادات التوصيل', value: currency(deliverySum)},
-        {label:'الربح الإجمالي (تقديري)', value: currency(profit)},
+        {label: getTranslation(lang, 'kpiInventoryValue'), value: currency(invValue)},
+        {label: getTranslation(lang, 'kpiSalesRevenue'), value: currency(revenue)},
+        {label: getTranslation(lang, 'kpiDeliveryRevenue'), value: currency(deliverySum)},
+        {label: getTranslation(lang, 'kpiProfit'), value: currency(profit)},
       ];
       for(const it of items){
         const d = document.createElement('div'); d.className='kpi';
@@ -2078,11 +2117,12 @@ function printPurchaseByPO(po){
       if (!kpiContainer) return;
       
       kpiContainer.innerHTML = '';
+      const lang = getUISettings().language;
       const items = [
-        {label:'إجمالي المبيعات', value: currency(kpis.totalSales)},
-        {label:'إجمالي المشتريات', value: currency(kpis.totalPurchases)},
-        {label:'الربح', value: currency(kpis.profit)},
-        {label:'قيمة المخزون', value: currency(kpis.stock)},
+        {label: getTranslation(lang, 'kpiSalesRevenue'), value: currency(kpis.totalSales)},
+        {label: getTranslation(lang, 'kpiCOGS'), value: currency(kpis.totalPurchases)},
+        {label: getTranslation(lang, 'kpiProfit'), value: currency(kpis.profit)},
+        {label: getTranslation(lang, 'kpiInventoryValue'), value: currency(kpis.stock)},
       ];
       
       for(const item of items) {
@@ -2156,7 +2196,10 @@ function printPurchaseByPO(po){
   };
 
   // ====== Soft Confirm ======
-  function softConfirm(btn, labelConfirm='تأكيد؟'){
+  function softConfirm(btn, labelConfirm){
+    if(!labelConfirm) {
+      labelConfirm = getTranslation(getUISettings().language, 'confirmLabel');
+    }
     if(!btn.dataset.arm){
       btn.dataset.arm = '1';
       const old = btn.textContent; btn.dataset.oldText = old;
@@ -2291,29 +2334,41 @@ async function confirmDeleteUniversal(module, id, name = '', extraQty = '') {
   }
 
   function renderLogin(){
-    authTitle.textContent = 'تسجيل الدخول';
+    const ui = getUISettings();
+    const lang = ui.language;
+    authTitle.textContent = getTranslation(lang, 'authTitleLogin');
     authBody.innerHTML = `
-      <label>اسم المستخدم</label><input id="loginUser" />
-      <label>كلمة المرور</label><input id="loginPass" type="password" />
+      <label data-i18n="usernameLabel">${getTranslation(lang, 'usernameLabel')}</label><input id="loginUser" />
+      <label data-i18n="passwordLabel">${getTranslation(lang, 'passwordLabel')}</label><input id="loginPass" type="password" />
       <div class="flex" style="margin-top:10px">
-        <button id="doLogin" class="btn-primary" type="button">دخول</button>
+        <button id="doLogin" class="btn-primary" type="button" data-i18n="btnLogin">${getTranslation(lang, 'btnLogin')}</button>
       </div>
-      <div class="hint">إذا لم تنشئ حسابًا بعد، ستظهر لك شاشة إنشاء حساب تلقائيًا.</div>
+      <div class="hint" data-i18n="loginHint">${getTranslation(lang, 'loginHint')}</div>
     `;
+    // Apply translations to the newly injected content
+    const elementsWithI18n = authBody.querySelectorAll('[data-i18n], [data-i18n-placeholder], [data-i18n-title], [data-i18n-aria], [data-i18n-alt]');
+    elementsWithI18n.forEach(element => translateElement(element, lang));
+    
     document.getElementById('doLogin').onclick = doLogin;
   }
 
   function renderCreate(){
-    authTitle.textContent = 'إنشاء حساب مدير';
+    const ui = getUISettings();
+    const lang = ui.language;
+    authTitle.textContent = getTranslation(lang, 'authTitleRegister');
     authBody.innerHTML = `
-      <label>اسم المستخدم</label><input id="regUser" placeholder="مثال: admin" />
-      <label>كلمة المرور</label><input id="regPass" type="password" />
-      <label>تأكيد كلمة المرور</label><input id="regPass2" type="password" />
+      <label data-i18n="usernameLabel">${getTranslation(lang, 'usernameLabel')}</label><input id="regUser" data-i18n-placeholder="usernamePlaceholder" placeholder="${getTranslation(lang, 'usernamePlaceholder')}" />
+      <label data-i18n="passwordLabel">${getTranslation(lang, 'passwordLabel')}</label><input id="regPass" type="password" />
+      <label data-i18n="confirmPasswordLabel">${getTranslation(lang, 'confirmPasswordLabel')}</label><input id="regPass2" type="password" />
       <div class="flex" style="margin-top:10px">
-        <button id="doCreate" class="btn-primary" type="button">إنشاء</button>
+        <button id="doCreate" class="btn-primary" type="button" data-i18n="btnRegister">${getTranslation(lang, 'btnRegister')}</button>
       </div>
-      <div class="hint">تُحفظ بيانات الحساب مُشفّرة محليًا على هذا المتصفح فقط.</div>
+      <div class="hint" data-i18n="authHint">${getTranslation(lang, 'authHint')}</div>
     `;
+    // Apply translations to the newly injected content
+    const elementsWithI18n = authBody.querySelectorAll('[data-i18n], [data-i18n-placeholder], [data-i18n-title], [data-i18n-aria], [data-i18n-alt]');
+    elementsWithI18n.forEach(element => translateElement(element, lang));
+    
     document.getElementById('doCreate').onclick = doCreate;
   }
 
@@ -2350,7 +2405,7 @@ async function confirmDeleteUniversal(module, id, name = '', extraQty = '') {
     dbKey = dbKeyBase; try { const legacy = localStorage.getItem(dbKeyBase + ':' + username); if(legacy && !localStorage.getItem(dbKey)) localStorage.setItem(dbKey, legacy); } catch(e){}
     db = loadDB();
     App.setDB(db);
-    whoami.textContent = 'المستخدم: ' + username;
+    whoami.textContent = getTranslation(getUISettings().language, 'currentUser') + ' ' + username;
     btnLogout.hidden = false;
     hideAuth();
     applyUISettings(); // Apply UI settings on startup
