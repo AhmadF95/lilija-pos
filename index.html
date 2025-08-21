@@ -429,7 +429,7 @@
         const nextType = e.target.value;
         const adminCount = list.filter(x => x.type==='admin' || x.isRoot===true).length;
         if(u.type==='admin' && nextType!=='admin' && adminCount<=1){
-          alert('يجب أن يبقى حساب أدمن واحد على الأقل'); e.target.value = 'admin'; return;
+          alert(getTranslation(getUISettings().language, 'alertMustKeepOneAdmin')); e.target.value = 'admin'; return;
         }
         u.type = nextType; saveUsers(list); return;
       }
@@ -446,11 +446,11 @@
     wrap.onclick = (e)=>{
       const rm = e.target.getAttribute('data-remove');
       if(rm){
-        if(rm===currentUser) return alert('لا يمكن حذف الحساب الحالي');
+        if(rm===currentUser) return alert(getTranslation(getUISettings().language, 'alertCannotDeleteSelf'));
         const list = loadUsers(); const u = list.find(x=>x.username===rm); if(u?.isRoot) return;
         const next = list.filter(x=>x.username!==rm);
         const adminCount = next.filter(x => x.type==='admin' || x.isRoot===true).length;
-        if(adminCount===0) return alert('يجب أن يبقى حساب أدمن واحد على الأقل');
+        if(adminCount===0) return alert(getTranslation(getUISettings().language, 'alertMustKeepOneAdmin'));
         saveUsers(next); renderUsersAdmin(); return;
       }
     };
@@ -463,8 +463,8 @@
         const uname = prompt('اسم المستخدم؟'); if(!uname) return;
         const pass1 = prompt('كلمة المرور؟'); if(!pass1) return;
         const list = loadUsers();
-        if(list.length>=5) return alert('بلغت الحد الأقصى 5 مستخدمين');
-        if(list.find(x=>x.username.toLowerCase()===uname.toLowerCase())) return alert('الاسم موجود');
+        if(list.length>=5) return alert(getTranslation(getUISettings().language, 'alertMaxUsers'));
+        if(list.find(x=>x.username.toLowerCase()===uname.toLowerCase())) return alert(getTranslation(getUISettings().language, 'alertUsernameExists'));
         const salt = genSalt(); const hash = await sha256(pass1 + salt);
         const defaultPermsUser = Object.fromEntries(LilijaAuth.MODULES.map(m=>[m,{view:true,edit:false,delete:false}]));
         list.push({ username:uname, salt, hash, type:'user', perms: defaultPermsUser });
@@ -771,6 +771,33 @@ function nextPo(){
       deleteReasonPrompt: 'سبب الحذف (اختياري):',
       alertNoDeletePermission: 'غير مسموح بالحذف لهذه الوحدة',
       
+      // Generic strings for fallbacks
+      genericItem: 'العنصر',
+      tableNotFound: 'الجدول غير موجود',
+      accountNotFound: 'حساب غير موجود',
+      wrongCurrentPassword: 'كلمة المرور الحالية غير صحيحة',
+      passwordChanged: 'تم تغيير كلمة المرور',
+      passwordMismatch: 'تحقق من كلمة المرور الجديدة والتأكيد',
+      
+      // Success messages
+      orderSaved: 'تم حفظ الطلب',
+      settingsSaved: 'تم الحفظ',
+      backupRestored: 'تمت الاستعادة بنجاح',
+      systemReset: 'تمت إعادة الضبط',
+      accountCreated: 'تم إنشاء الحساب. يمكنك تسجيل الدخول الآن.',
+      
+      // Error messages
+      invalidFile: 'ملف غير صالح',
+      invalidCredentials: 'بيانات الاعتماد غير صحيحة',
+      enterUsernamePassword: 'أدخل اسم مستخدم وكلمة مرور',
+      passwordConfirmMismatch: 'تأكيد كلمة المرور غير مطابق',
+      
+      // Product validation errors
+      enterProductName: 'أدخل اسم المنتج',
+      productNameExists: 'اسم المنتج موجود مسبقًا',
+      skuExists: 'الباركود/‏SKU مستخدم مسبقًا',
+      usernameAlreadyExists: 'اسم المستخدم موجود مسبقًا',
+      
       // Audit log section - all labels
       auditSearchPlaceholder: 'ابحث بالاسم/النوع/المستخدم...',
       btnAuditExport: '⬇️ تصدير CSV',
@@ -989,6 +1016,33 @@ function nextPo(){
       deleteConfirmTitle: 'Delete «{name}» from {module}?',
       deleteReasonPrompt: 'Reason for deletion (optional):',
       alertNoDeletePermission: 'No permission to delete from this module',
+      
+      // Generic strings for fallbacks
+      genericItem: 'Item',
+      tableNotFound: 'Table not found',
+      accountNotFound: 'Account not found',
+      wrongCurrentPassword: 'Current password is incorrect',
+      passwordChanged: 'Password changed',
+      passwordMismatch: 'Please verify new password and confirmation match',
+      
+      // Success messages
+      orderSaved: 'Order saved',
+      settingsSaved: 'Settings saved',
+      backupRestored: 'Backup restored successfully',
+      systemReset: 'System reset completed',
+      accountCreated: 'Account created. You can now log in.',
+      
+      // Error messages
+      invalidFile: 'Invalid file',
+      invalidCredentials: 'Invalid credentials',
+      enterUsernamePassword: 'Enter username and password',
+      passwordConfirmMismatch: 'Password confirmation does not match',
+      
+      // Product validation errors
+      enterProductName: 'Enter product name',
+      productNameExists: 'Product name already exists',
+      skuExists: 'Barcode/SKU already in use',
+      usernameAlreadyExists: 'Username already exists',
       
       // Audit log section - all labels
       auditSearchPlaceholder: 'Search by name/type/user...',
@@ -1348,17 +1402,17 @@ function nextPo(){
   const sku  = skuRaw.trim();
   const cat  = catRaw.trim();
 
-  if (!name) { alert('أدخل اسم المنتج'); pName.focus(); return; }
+  if (!name) { alert(getTranslation(getUISettings().language, 'enterProductName')); pName.focus(); return; }
 
   // Check for duplicates using shared utilities
   if (isDuplicateProductName(name)) {
-    alert('اسم المنتج موجود مسبقًا');
+    alert(getTranslation(getUISettings().language, 'productNameExists'));
     pName.focus();
     return;
   }
 
   if (isDuplicateSKU(sku)) {
-    alert('الباركود/‏SKU مستخدم مسبقًا');
+    alert(getTranslation(getUISettings().language, 'skuExists'));
     pSku.focus();
     return;
   }
@@ -1831,7 +1885,7 @@ function printPurchaseByPO(po){
     if(document.getElementById('customerName')) document.getElementById('customerName').value = '';
     if(document.getElementById('customerPhone')) document.getElementById('customerPhone').value = '';
     renderSales(); renderReports();
-    alert('تم حفظ الطلب');
+    alert(getTranslation(getUISettings().language, 'orderSaved'));
   };
 
   function renderOrdersList(){
@@ -2082,7 +2136,7 @@ function printPurchaseByPO(po){
   // ====== Settings ======
   const lowStockThreshold = document.getElementById('lowStockThreshold');
   function renderSettings(){ if(lowStockThreshold) lowStockThreshold.value = db.settings.lowStockThreshold; }
-  document.getElementById('saveSettings').onclick = ()=>{ db.settings.lowStockThreshold = Number(lowStockThreshold.value)||0; try{ recordAudit('edit','settings','', 'lowStockThreshold='+db.settings.lowStockThreshold);}catch{} saveDB(db); alert('تم الحفظ'); refreshAll(); };
+  document.getElementById('saveSettings').onclick = ()=>{ db.settings.lowStockThreshold = Number(lowStockThreshold.value)||0; try{ recordAudit('edit','settings','', 'lowStockThreshold='+db.settings.lowStockThreshold);}catch{} saveDB(db); alert(getTranslation(getUISettings().language, 'settingsSaved')); refreshAll(); };
 
   // ====== Backup / Restore / Reset ======
   document.getElementById('btnBackup').onclick = ()=>{
@@ -2092,13 +2146,13 @@ function printPurchaseByPO(po){
   document.getElementById('btnRestore').onclick = ()=> document.getElementById('restoreFile').click();
   document.getElementById('restoreFile').onchange = (e)=>{
     const file = e.target.files[0]; if(!file) return;
-    const reader = new FileReader(); reader.onload = ()=>{ try{ db = JSON.parse(reader.result); saveDB(db); refreshAll(); alert('تمت الاستعادة بنجاح'); }catch{ alert('ملف غير صالح'); } }; reader.readAsText(file);
+    const reader = new FileReader(); reader.onload = ()=>{ try{ db = JSON.parse(reader.result); saveDB(db); refreshAll(); alert(getTranslation(getUISettings().language, 'backupRestored')); }catch{ alert(getTranslation(getUISettings().language, 'invalidFile')); } }; reader.readAsText(file);
     e.target.value='';
   };
   const btnResetEl = document.getElementById('btnReset');
   btnResetEl.onclick = ()=>{
     if(!softConfirm(btnResetEl,'تأكيد إعادة؟')) return;
-    db = deepClone(defaults); saveDB(db); refreshAll(); alert('تمت إعادة الضبط');
+    db = deepClone(defaults); saveDB(db); refreshAll(); alert(getTranslation(getUISettings().language, 'systemReset'));
   };
 
   // ====== Soft Confirm ======
@@ -2124,7 +2178,7 @@ async function confirmDeleteUniversal(module, id, name = '', extraQty = '') {
   }
 
   const title = getTranslation(getUISettings().language, 'deleteConfirmTitle')
-    .replace('{name}', name ? '«' + name + '»' : 'العنصر')
+    .replace('{name}', name ? '«' + name + '»' : getTranslation(getUISettings().language, 'genericItem'))
     .replace('{module}', module);
   if (!confirm(title)) return { ok: false };
 
@@ -2143,7 +2197,7 @@ async function confirmDeleteUniversal(module, id, name = '', extraQty = '') {
   // ====== Export CSV ======
   function exportTableToCSV(tableId, filename, mode='window'){
     const table = document.getElementById(tableId);
-    if(!table){ alert('الجدول غير موجود'); return; }
+    if(!table){ alert(getTranslation(getUISettings().language, 'tableNotFound')); return; }
 
     const headRow = table.tHead && table.tHead.rows[0] ? table.tHead.rows[0] : null;
     const totalCols = headRow ? headRow.cells.length : (table.rows[0] ? table.rows[0].cells.length : 0);
@@ -2267,15 +2321,15 @@ async function confirmDeleteUniversal(module, id, name = '', extraQty = '') {
     const u = document.getElementById('regUser').value.trim();
     const p1 = document.getElementById('regPass').value;
     const p2 = document.getElementById('regPass2').value;
-    if(!u || !p1) return alert('أدخل اسم مستخدم وكلمة مرور');
-    if(p1 !== p2) return alert('تأكيد كلمة المرور غير مطابق');
+    if(!u || !p1) return alert(getTranslation(getUISettings().language, 'enterUsernamePassword'));
+    if(p1 !== p2) return alert(getTranslation(getUISettings().language, 'passwordConfirmMismatch'));
     const users = loadUsers();
-    if(users.find(x=>x.username.toLowerCase()===u.toLowerCase())) return alert('اسم المستخدم موجود مسبقًا');
+    if(users.find(x=>x.username.toLowerCase()===u.toLowerCase())) return alert(getTranslation(getUISettings().language, 'usernameAlreadyExists'));
     const salt = genSalt();
     const hash = await sha256(p1 + salt);
     users.push({ username:u, salt, hash });
     saveUsers(users);
-    alert('تم إنشاء الحساب. يمكنك تسجيل الدخول الآن.');
+    alert(getTranslation(getUISettings().language, 'accountCreated'));
     renderLogin();
   }
 
@@ -2284,9 +2338,9 @@ async function confirmDeleteUniversal(module, id, name = '', extraQty = '') {
     const p = document.getElementById('loginPass').value;
     const users = loadUsers();
     const rec = users.find(x=>x.username.toLowerCase()===u.toLowerCase());
-    if(!rec) return alert('بيانات الاعتماد غير صحيحة');
+    if(!rec) return alert(getTranslation(getUISettings().language, 'invalidCredentials'));
     const hash = await sha256(p + rec.salt);
-    if(hash !== rec.hash) return alert('بيانات الاعتماد غير صحيحة');
+    if(hash !== rec.hash) return alert(getTranslation(getUISettings().language, 'invalidCredentials'));
     setSession(rec.username);
     startApp(rec.username);
   }
@@ -2308,16 +2362,16 @@ async function confirmDeleteUniversal(module, id, name = '', extraQty = '') {
     const cur = document.getElementById('curPass').value;
     const n1 = document.getElementById('newPass').value;
     const n2 = document.getElementById('newPass2').value;
-    if(!n1 || n1 !== n2) return alert('تحقق من كلمة المرور الجديدة والتأكيد');
+    if(!n1 || n1 !== n2) return alert(getTranslation(getUISettings().language, 'passwordMismatch'));
     const users = loadUsers();
     const rec = users.find(x=>x.username===currentUser);
-    if(!rec) return alert('حساب غير موجود');
+    if(!rec) return alert(getTranslation(getUISettings().language, 'accountNotFound'));
     const hcur = await sha256(cur + rec.salt);
-    if(hcur !== rec.hash) return alert('كلمة المرور الحالية غير صحيحة');
+    if(hcur !== rec.hash) return alert(getTranslation(getUISettings().language, 'wrongCurrentPassword'));
     rec.salt = genSalt();
     rec.hash = await sha256(n1 + rec.salt);
     saveUsers(users);
-    alert('تم تغيير كلمة المرور');
+    alert(getTranslation(getUISettings().language, 'passwordChanged'));
     document.getElementById('curPass').value = document.getElementById('newPass').value = document.getElementById('newPass2').value = '';
   };
 
