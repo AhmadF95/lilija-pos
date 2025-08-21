@@ -395,7 +395,7 @@
         if(list.length>=5) return alert('بلغت الحد الأقصى 5 مستخدمين');
         if(list.find(x=>x.username.toLowerCase()===uname.toLowerCase())) return alert('الاسم موجود');
         const salt = genSalt(); const hash = await sha256(pass1 + salt);
-        const defaultPermsUser = Object.fromEntries(MODULES.map(m=>[m,{view:true,edit:false,delete:false}]));
+        const defaultPermsUser = Object.fromEntries(LilijaAuth.MODULES.map(m=>[m,{view:true,edit:false,delete:false}]));
         list.push({ username:uname, salt, hash, type:'user', perms: defaultPermsUser });
         saveUsers(list); renderUsersAdmin();
       };
@@ -529,32 +529,8 @@ function nextPo(){
     {id:'settings', label:'⚙️ الإعدادات'},
     {id:'audit', label:'📝 سجل الحركات'},
   ];
-  // ====== Roles & Permissions ======
-  const MODULES = ['products','purchases','sales','dashboard','users','settings','audit'];
-  const ACTIONS = ['view','edit','delete'];
-  function getCurrentUser(){
-    const users = loadUsers() || []; return users.find(u=>u.username===currentUser) || null;
-  }
-  function ensureUserSchema(){
-    let users = loadUsers(); if(!Array.isArray(users)) users = [];
-    let changed = false; let hasRoot = false;
-    const defaultUserPerms = Object.fromEntries(MODULES.map(m=>[m,{view:true,edit:false,delete:false}]));
-    const defaultAdminPerms = Object.fromEntries(MODULES.map(m=>[m,{view:true,edit:true,delete:true}]));
-    users = users.map((u,idx)=>{
-      if(!u.type){ u.type = (idx===0?'admin':'user'); changed=true; }
-      if(!u.perms){ u.perms = (u.type==='admin')? defaultAdminPerms : defaultUserPerms; changed=true; }
-      if(u.isRoot) hasRoot = true;
-      return u;
-    }).slice(0,5);
-    if(!hasRoot && users.length){ users[0].isRoot = true; users[0].type='admin'; users[0].perms = defaultAdminPerms; changed=true; }
-    if(changed) saveUsers(users);
-  }
-  function can(module, action){
-    const u = getCurrentUser();
-    if(!u) return false;
-    if(u.isRoot===true || u.type==='admin') return true;
-    return Boolean(u.perms && u.perms[module] && u.perms[module][action]);
-  }
+  
+  // Note: Auth & permissions moved to modules/auth.js
 
   const tabsEl = document.getElementById('tabs');
   tabsCfg.forEach(t=>{ const b = document.createElement('button'); b.className='tab'; b.textContent=t.label; b.dataset.tab=t.id; tabsEl.appendChild(b); });
@@ -1539,6 +1515,7 @@ async function confirmDeleteUniversal(module, id, name = '', extraQty = '') {
 
   <!-- LILIJA modules -->
   <script src="modules/utils.js"></script>
+  <script src="modules/auth.js"></script>
   <script src="modules/users_admin.js"></script>
   <script src="modules/audit_log.js"></script>
   <script src="modules/dashboard.js"></script>

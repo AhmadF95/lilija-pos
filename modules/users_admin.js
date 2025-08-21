@@ -2,32 +2,8 @@
 // LILIJA users_admin.js
 (function(){
   if(window.__lilijaUsersAdminLoaded) return; window.__lilijaUsersAdminLoaded = true;
-  window.currentUser = window.currentUser || function(){
-    const users = (typeof loadUsers==='function'? loadUsers() : []) || [];
-    return users.find(u=>u.username===window.currentUser) || null;
-  };
-  window.can = window.can || function(module, action){
-    const u = window.currentUser? window.currentUser() : null;
-    if(!u) return false;
-    if(u.isRoot===true || u.type==='admin') return true;
-    return !!(u.perms && u.perms[module] && u.perms[module][action]);
-  };
-  window.ensureUserSchema = window.ensureUserSchema || function(){
-    if(typeof loadUsers!=='function' || typeof saveUsers!=='function') return;
-    let users = loadUsers(); if(!Array.isArray(users)) users = [];
-    let changed=false, hasRoot=false;
-    const MODULES=['products','purchases','sales','users','settings','audit'];
-    const defaultUserPerms=Object.fromEntries(MODULES.map(m=>[m,{view:true,edit:false,delete:false}]));
-    const defaultAdminPerms=Object.fromEntries(MODULES.map(m=>[m,{view:true,edit:true,delete:true}]));
-    users = users.map((u,idx)=>{
-      if(!u.type){ u.type=(idx===0?'admin':'user'); changed=true; }
-      if(!u.perms){ u.perms=(u.type==='admin')? defaultAdminPerms : defaultUserPerms; changed=true; }
-      if(u.isRoot) hasRoot=true;
-      return u;
-    }).slice(0,5);
-    if(!hasRoot && users.length){ users[0].isRoot=true; users[0].type='admin'; users[0].perms=defaultAdminPerms; changed=true; }
-    if(changed) saveUsers(users);
-  };
+  
+  // Note: Auth functions moved to modules/auth.js
 
   window.renderUsersAdmin = function renderUsersAdmin(){
     try{
@@ -35,7 +11,7 @@
       const section = document.getElementById('usersAdminSection');
       const wrap = document.getElementById('usersAdminWrap');
       if(!section||!wrap) return;
-      const me = (window.currentUser&&currentUser()) || null;
+      const me = (window.getCurrentUser && getCurrentUser()) || null;
       const isAdmin = !!(me && (me.type==='admin' || me.isRoot===true));
       section.style.display = isAdmin ? '' : 'none';
       if(!isAdmin){ wrap.innerHTML=''; return; }
@@ -50,7 +26,7 @@
       }
       html += '<div class="table-wrap"><table><thead><tr><th>المستخدم</th><th>النوع</th><th>المنتجات</th><th>المبيعات</th><th>المشتريات</th><th>المستخدمون</th><th>الإعدادات</th><th>سجل الحركات</th><th></th></tr></thead><tbody>';
 
-      const MODULES=['products','sales','purchases','users','settings','audit'];
+      const MODULES = window.LilijaAuth ? window.LilijaAuth.MODULES : ['products','sales','purchases','users','settings','audit'];
       function permCells(u, mod){
         const p=(u.perms&&u.perms[mod])||{};
         function cb(act, lbl){
