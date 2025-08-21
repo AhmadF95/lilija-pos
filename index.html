@@ -678,12 +678,8 @@ if (sku && db.products.some(x => x.id !== p.id && norm(x.sku) === norm(sku))) {
 
 Object.assign(p, { name, sku, cat, price });
 try { recordAudit && recordAudit('edit','products', p.id, `name=${name},sku=${sku},price=${price}`); } catch(_){}
-saveDB(db); refreshAll();
-
-      Object.assign(p, { name, sku, cat, price });
-      try { if (typeof recordAudit === 'function') recordAudit('edit', 'products', p.id, `name=${name},sku=${sku},price=${price}`); } catch (_) {}
-      saveDB(db);
-      refreshAll();
+saveDB(db); 
+refreshAll();
       return;
     }
 
