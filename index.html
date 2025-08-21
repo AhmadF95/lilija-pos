@@ -701,16 +701,16 @@ if (poBox && !document.getElementById('supName')) {
     </div>
   `);
 }
+// Update PO preview badge after supplier fields are added
 const poPreview = document.getElementById('poPreview');
 if (poPreview) poPreview.textContent = '#' + (db.counters?.nextPo ?? 1001);
-  const supName   = document.getElementById('supName');
-  const supPhone  = document.getElementById('supPhone');
-  const poPreview = document.getElementById('poPreview');
-  if (poPreview) poPreview.textContent = '#' + (db.counters?.nextPo ?? 1001);
-  // إنشاء صندوق المسودة مرة واحدة
-if (controls && !document.getElementById('poDraftBox')){
-  controls.insertAdjacentHTML('beforeend', `
-    <div id="poDraftBox" class="panel" style="margin-top:10px">
+
+// إنشاء صندوق المسودة مرة واحدة
+const purchasesSection = document.querySelector('[data-tab="purchases"] .grid');
+if (purchasesSection && !document.getElementById('poDraftBox')){
+  purchasesSection.insertAdjacentHTML('beforeend', `
+    <div class="g12">
+      <div id="poDraftBox" class="panel" style="margin-top:10px">
       <div class="flex">
         <strong>مسودة فاتورة المشتريات</strong>
         <span class="tag" style="margin-inline-start:auto">PO القادم: <span id="poPreview2">#${db.counters?.nextPo ?? 1001}</span></span>
@@ -725,6 +725,7 @@ if (controls && !document.getElementById('poDraftBox')){
         <tbody></tbody>
         <tfoot><tr><th colspan="3" style="text-align:left">الإجمالي</th><th id="poDraftTotal">0.00</th><th></th></tr></tfoot>
       </table>
+      </div>
     </div>
   `);
 }
@@ -778,12 +779,15 @@ if (addBtn && !addBtn.__boundDraft){
     renderPurchaseDraft();
   };
 }
-   // حفظ الفاتورة (إنشاء PO واحد وتفريغ المسودة)
-  // داخل btnSavePO.onclick وبعد renderPurchaseDraft() و refreshAll()
-const supNameEl  = document.getElementById('supName');
-const supPhoneEl = document.getElementById('supPhone');
-if (supNameEl)  supNameEl.value  = '';
-if (supPhoneEl) supPhoneEl.value = '';
+// Helper function to clear supplier fields
+function clearSupplierFields() {
+  const supNameEl = document.getElementById('supName');
+  const supPhoneEl = document.getElementById('supPhone');
+  if (supNameEl) supNameEl.value = '';
+  if (supPhoneEl) supPhoneEl.value = '';
+}
+
+// حفظ الفاتورة (إنشاء PO واحد وتفريغ المسودة)
 const btnSavePO = document.getElementById('savePO');
 if (btnSavePO && !btnSavePO.__bound){
   btnSavePO.__bound = true;
@@ -814,15 +818,17 @@ if (btnSavePO && !btnSavePO.__bound){
 
     saveDB(db);
     purchaseDraft = [];
+    
+    // Clear supplier fields after save
+    clearSupplierFields();
+    
+    // Update PO badges
     const poPrev = document.getElementById('poPreview'); if(poPrev) poPrev.textContent = '#' + (db.counters?.nextPo ?? 1001);
     const poPrev2= document.getElementById('poPreview2'); if(poPrev2) poPrev2.textContent= '#' + (db.counters?.nextPo ?? 1001);
+    
     renderPurchaseDraft();
     refreshAll();
-    // داخل btnClear.onclick بعد تفريغ المسودة
-const supNameEl  = document.getElementById('supName');
-const supPhoneEl = document.getElementById('supPhone');
-if (supNameEl)  supNameEl.value  = '';
-if (supPhoneEl) supPhoneEl.value = '';
+    
     if(confirm('تم الحفظ. هل تريد طباعة الفاتورة الآن؟')){
       printPurchaseByPO(po);
     }
@@ -834,7 +840,9 @@ if (btnClear && !btnClear.__bound){
   btnClear.__bound = true;
   btnClear.onclick = ()=>{
     if(!confirm('مسح المسودة؟')) return;
-    purchaseDraft = []; renderPurchaseDraft();
+    purchaseDraft = [];
+    clearSupplierFields(); // Clear supplier fields when clearing draft
+    renderPurchaseDraft();
   };
 }
 
