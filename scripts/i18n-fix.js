@@ -1,6 +1,13 @@
 // Runtime i18n patch (selector-based, no HTML changes required)
 (function () {
   function getLang() {
+    // Prefer DB UI settings first
+    if (typeof getUISettings === 'function') {
+      try {
+        var uiSettings = getUISettings();
+        if (uiSettings && uiSettings.language) return uiSettings.language;
+      } catch (e) {}
+    }
     if (window.pos && window.pos.lang) return window.pos.lang;
     if (window.posLang) return window.posLang;
     try { return localStorage.getItem('pos.lang') || 'en'; } catch (e) { return 'en'; }
@@ -44,7 +51,12 @@
     document.querySelectorAll('[data-i18n]').forEach(function (el) {
       var key = el.getAttribute('data-i18n');
       if (!key) return;
-      el.textContent = t(key);
+      if (el.tagName.toLowerCase() === 'option') {
+        // Special handling for option elements
+        el.textContent = t(key);
+      } else {
+        el.textContent = t(key);
+      }
     });
     document.querySelectorAll('[data-i18n-placeholder]').forEach(function (el) {
       var key = el.getAttribute('data-i18n-placeholder');
@@ -55,6 +67,11 @@
       var key = el.getAttribute('data-i18n-value');
       if (!key) return;
       try { el.value = t(key); } catch (e) { el.setAttribute('value', t(key)); }
+    });
+    document.querySelectorAll('[data-i18n-title]').forEach(function (el) {
+      var key = el.getAttribute('data-i18n-title');
+      if (!key) return;
+      try { el.title = t(key); } catch (e) { el.setAttribute('title', t(key)); }
     });
   }
 
@@ -91,6 +108,7 @@
     mapping.forEach(function(m) { replaceIfSelector(m.sel, m.key); });
 
     var selectorMapping = [
+      // Dashboard elements
       {sel: 'h1.dashboard-title', key: 'dashboardTitle'},
       {sel: '.dashboard h1', key: 'dashboardTitle'},
       {sel: '.dashboard-title', key: 'dashboardTitle'},
@@ -110,7 +128,32 @@
       {sel: '.purchases-table thead th:nth-child(2)', key: 'purchasesQuantity'},
       {sel: '.purchases-table thead th:nth-child(3)', key: 'purchasesUnitCost'},
       {sel: '.purchases-table thead th:nth-child(4)', key: 'purchasesTotal'},
-      {sel: '.purchases-table tfoot td[colspan="3"]', key: 'grandTotalLabel'}
+      {sel: '.purchases-table tfoot td[colspan="3"]', key: 'grandTotalLabel'},
+      
+      // Header and app branding
+      {sel: 'title', key: 'appTitle'},
+      {sel: '#shopNameSpan', key: 'appName'},
+      
+      // General settings elements
+      {sel: '#generalSettingsTitle', key: 'generalSettingsTitle'},
+      {sel: '#languageLabel', key: 'languageLabel'},
+      {sel: '#themeLabel', key: 'themeLabel'},
+      
+      // Language dropdown options
+      {sel: 'option[value="ar"]', key: 'languageArabic'},
+      {sel: 'option[value="en"]', key: 'languageEnglish'},
+      {sel: 'option[value="dark"]', key: 'themeDark'},
+      {sel: 'option[value="light"]', key: 'themeLight'},
+      
+      // Tab elements (if they have class-based selectors)
+      {sel: '.tab[data-tab="products"]', key: 'tabProducts'},
+      {sel: '.tab[data-tab="purchases"]', key: 'tabPurchases'},
+      {sel: '.tab[data-tab="sales"]', key: 'tabSales'},
+      {sel: '.tab[data-tab="dashboard"]', key: 'tabDashboard'},
+      {sel: '.tab[data-tab="reports"]', key: 'tabReports'},
+      {sel: '.tab[data-tab="general"]', key: 'tabGeneral'},
+      {sel: '.tab[data-tab="settings"]', key: 'tabSettings'},
+      {sel: '.tab[data-tab="audit"]', key: 'tabAudit'}
     ];
     selectorMapping.forEach(function(m) { replaceIfSelector(m.sel, m.key); });
 
