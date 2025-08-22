@@ -25,5 +25,7 @@ window.I18N_EN = Object.assign(window.I18N_EN || {}, {
   purchasesQuantity: "Quantity",
   purchasesUnitCost: "Unit Cost",
   purchasesTotal: "Total",
-  grandTotalLabel: "Grand total"
+  grandTotalLabel: "Grand total",
+  languageNameAr: "Arabic",
+  languageNameEn: "English"
 });

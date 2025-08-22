@@ -1,8 +1,17 @@
 // Runtime i18n patch (selector-based, no HTML changes required)
 (function () {
   function getLang() {
+    // Prefer DB UI settings first
+    if (typeof getUISettings === 'function') {
+      try {
+        var uiSettings = getUISettings();
+        if (uiSettings && uiSettings.language) return uiSettings.language;
+      } catch (e) { }
+    }
+    // Fall back to window globals
     if (window.pos && window.pos.lang) return window.pos.lang;
     if (window.posLang) return window.posLang;
+    // Finally try localStorage with default 'en'
     try { return localStorage.getItem('pos.lang') || 'en'; } catch (e) { return 'en'; }
   }
 
@@ -110,7 +119,9 @@
       {sel: '.purchases-table thead th:nth-child(2)', key: 'purchasesQuantity'},
       {sel: '.purchases-table thead th:nth-child(3)', key: 'purchasesUnitCost'},
       {sel: '.purchases-table thead th:nth-child(4)', key: 'purchasesTotal'},
-      {sel: '.purchases-table tfoot td[colspan="3"]', key: 'grandTotalLabel'}
+      {sel: '.purchases-table tfoot td[colspan="3"]', key: 'grandTotalLabel'},
+      {sel: '#uiLanguage option[value="ar"]', key: 'languageNameAr'},
+      {sel: '#uiLanguage option[value="en"]', key: 'languageNameEn'}
     ];
     selectorMapping.forEach(function(m) { replaceIfSelector(m.sel, m.key); });
 

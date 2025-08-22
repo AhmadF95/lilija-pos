@@ -316,7 +316,7 @@
         <div class="g6">
           <label id="languageLabel">🌐 اللغة</label>
           <select id="uiLanguage">
-            <option value="ar">العربية</option>
+            <option value="ar">Arabic</option>
             <option value="en">English</option>
           </select>
           
@@ -1286,15 +1286,56 @@ function nextPo(){
     }
   }
 
-  // Initialize language from localStorage or default to Arabic
+  // Initialize language from DB UI settings, localStorage, or default to English
   function initializeLanguage() {
-    const savedLang = localStorage.getItem('pos.lang') || 'ar';
+    let savedLang;
+    
+    // Prefer DB UI settings first
+    try {
+      const ui = getUISettings();
+      if (ui && ui.language) {
+        savedLang = ui.language;
+      }
+    } catch (e) {
+      // Fall back if getUISettings() is not available
+    }
+    
+    // Fall back to localStorage if no DB setting
+    if (!savedLang) {
+      savedLang = localStorage.getItem('pos.lang') || 'en';
+    }
+    
     applyTranslations(savedLang);
     
     // Set the language dropdown if it exists
     const langDropdown = document.getElementById('uiLanguage');
     if (langDropdown) {
       langDropdown.value = savedLang;
+      
+      // Add change handler to save both localStorage and DB setting
+      langDropdown.onchange = () => {
+        const selectedLang = langDropdown.value;
+        
+        // Save to localStorage
+        localStorage.setItem('pos.lang', selectedLang);
+        
+        // Save to DB UI settings
+        try {
+          const ui = getUISettings();
+          ui.language = selectedLang;
+          saveUISettings(ui);
+        } catch (e) {
+          console.warn('Could not save language to DB settings:', e);
+        }
+        
+        // Apply UI settings to trigger full re-translation
+        applyUISettings();
+        
+        // Re-run i18n patch to translate language dropdown options
+        if (window.__posI18nApply) {
+          window.__posI18nApply();
+        }
+      };
     }
   }
 
@@ -1317,9 +1358,9 @@ function nextPo(){
 
   // ====== UI Settings Functions ======
   function getUISettings() {
-    if (!db || !db.settings) return { language: 'ar', theme: 'dark', accent: '#22d3ee', shopName: '', shopLogo: '' };
+    if (!db || !db.settings) return { language: 'en', theme: 'dark', accent: '#22d3ee', shopName: '', shopLogo: '' };
     if (!db.settings.ui) {
-      db.settings.ui = { language: 'ar', theme: 'dark', accent: '#22d3ee', shopName: '', shopLogo: '' };
+      db.settings.ui = { language: 'en', theme: 'dark', accent: '#22d3ee', shopName: '', shopLogo: '' };
     }
     return db.settings.ui;
   }
@@ -2520,21 +2561,11 @@ async function confirmDeleteUniversal(module, id, name = '', extraQty = '') {
   // ====== General Settings Event Handlers ======
   // Language change
   document.addEventListener('DOMContentLoaded', () => {
-    const uiLanguage = document.getElementById('uiLanguage');
     const uiTheme = document.getElementById('uiTheme');
     const uiAccent = document.getElementById('uiAccent');
     const shopName = document.getElementById('shopName');
     const shopLogoFile = document.getElementById('shopLogoFile');
     const removeLogoBtn = document.getElementById('removeLogoBtn');
-    
-    if (uiLanguage) {
-      uiLanguage.onchange = () => {
-        const ui = getUISettings();
-        ui.language = uiLanguage.value;
-        saveUISettings(ui);
-        applyUISettings();
-      };
-    }
     
     if (uiTheme) {
       uiTheme.onchange = () => {
@@ -2620,6 +2651,8 @@ async function confirmDeleteUniversal(module, id, name = '', extraQty = '') {
   <!-- i18n translation files -->
   <script src="i18n/en.js"></script>
   <script src="i18n/ar.js"></script>
+  <script src="i18n/en.additions.js"></script>
+  <script src="i18n/ar.additions.js"></script>
   
   <!-- LILIJA modules -->
   <script src="modules/utils.js"></script>

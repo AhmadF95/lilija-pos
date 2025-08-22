@@ -25,5 +25,7 @@ window.I18N_AR = Object.assign(window.I18N_AR || {}, {
   purchasesQuantity: "الكمية",
   purchasesUnitCost: "سعر الوحدة",
   purchasesTotal: "الإجمالي",
-  grandTotalLabel: "الإجمالي الكلي"
+  grandTotalLabel: "الإجمالي الكلي",
+  languageNameAr: "العربية",
+  languageNameEn: "الإنجليزية"
 });
