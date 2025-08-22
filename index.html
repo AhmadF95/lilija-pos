@@ -266,16 +266,16 @@
 
     <!-- تقارير -->
     <section class="panel" data-tab="reports" hidden>
-      <h2>التقارير</h2>
+      <h2 data-i18n="reportsTitle">التقارير</h2>
       <div class="kpis" id="kpis"></div>
-      <div class="flex"><h3 style="margin:0">أدنى مخزون</h3><div class="right"><button id="exportLowStock" type="button" class="btn-muted" data-export="1" data-table="lowStockTable" data-filename="low-stock.csv">⬇️ تصدير (Excel)</button></div></div>
+      <div class="flex"><h3 style="margin:0" data-i18n="lowStockSectionTitle">أدنى مخزون</h3><div class="right"><button id="exportLowStock" type="button" class="btn-muted" data-export="1" data-table="lowStockTable" data-filename="low-stock.csv" data-i18n="exportExcelBtn">⬇️ تصدير (Excel)</button></div></div>
       <table id="lowStockTable">
-        <thead><tr><th>المنتج</th><th>المتوفر</th><th>حالة</th></tr></thead>
+        <thead><tr><th data-i18n="thProduct">المنتج</th><th data-i18n="thAvailable">المتوفر</th><th data-i18n="thStatus">حالة</th></tr></thead>
         <tbody></tbody>
       </table>
-      <div class="flex" style="margin-top:18px"><h3 style="margin:0">أفضل المنتجات مبيعًا</h3><div class="right"><button id="exportTopProducts" type="button" class="btn-muted" data-export="1" data-table="topProductsTable" data-filename="top-products.csv">⬇️ تصدير (Excel)</button></div></div>
+      <div class="flex" style="margin-top:18px"><h3 style="margin:0" data-i18n="topProductsSectionTitle">أفضل المنتجات مبيعًا</h3><div class="right"><button id="exportTopProducts" type="button" class="btn-muted" data-export="1" data-table="topProductsTable" data-filename="top-products.csv" data-i18n="exportExcelBtn">⬇️ تصدير (Excel)</button></div></div>
       <table id="topProductsTable">
-        <thead><tr><th>المنتج</th><th>الكمية المباعة</th><th>الإيراد</th></tr></thead>
+        <thead><tr><th data-i18n="thProduct">المنتج</th><th data-i18n="thQuantitySold">الكمية المباعة</th><th data-i18n="thRevenue">الإيراد</th></tr></thead>
         <tbody></tbody>
       </table>
     </section>
@@ -853,6 +853,17 @@ function nextPo(){
       colorNeonOrange: 'برتقالي نيون',
       colorPurple: 'بنفسجي',
       
+      // Reports section
+      reportsTitle: 'التقارير',
+      lowStockSectionTitle: 'أدنى مخزون',
+      topProductsSectionTitle: 'أفضل المنتجات مبيعًا',
+      exportExcelBtn: '⬇️ تصدير (Excel)',
+      thProduct: 'المنتج',
+      thAvailable: 'المتوفر',
+      thStatus: 'حالة',
+      thQuantitySold: 'الكمية المباعة',
+      thRevenue: 'الإيراد',
+      
       // Additional error messages
       emptyDraftAlert: 'المسودة فارغة',
       productNameExists: 'اسم المنتج موجود مسبقًا',
@@ -1149,6 +1160,17 @@ function nextPo(){
       colorNeonBlue: 'Neon Blue',
       colorNeonOrange: 'Neon Orange',
       colorPurple: 'Purple',
+      
+      // Reports section
+      reportsTitle: 'Reports',
+      lowStockSectionTitle: 'Low Stock',
+      topProductsSectionTitle: 'Top Selling Products',
+      exportExcelBtn: '⬇️ Export (Excel)',
+      thProduct: 'Product',
+      thAvailable: 'Available',
+      thStatus: 'Status',
+      thQuantitySold: 'Quantity Sold',
+      thRevenue: 'Revenue',
       
       // Additional error messages
       emptyDraftAlert: 'Draft is empty',
