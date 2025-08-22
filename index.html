@@ -52,7 +52,7 @@
     .color-swatch:hover,.color-swatch.selected{border-color:var(--text)}
     .shop-logo-preview{max-height:40px;margin-top:8px;border-radius:6px}
     .shop-logo-controls{display:flex;gap:8px;margin-top:8px;align-items:center}
-    #shopLogoImg{height:20px;border-radius:4px;margin-inline-end:8px}
+    #shopLogoImg{height:40px;border-radius:4px;margin-inline-end:8px}
 
     /* Header RTL/LTR styles */
     .app-header{gap:10px}
@@ -83,7 +83,7 @@
     <div class="wrap flex">
       <h1 class="app-header">
         <img id="shopLogoImg" style="display:none" alt="Shop Logo" />
-        <svg id="logoLilija" viewBox="0 0 200 200" width="20" height="20" aria-hidden="true" style="vertical-align:-3px;margin-inline-end:6px"><circle cx="100" cy="100" r="88" fill="none" stroke="#e6eef9" stroke-width="12"/><path d="M60 60 v50 c0 25 20 35 40 35 h35" fill="none" stroke="#e6eef9" stroke-width="12" stroke-linecap="round"/><rect x="86" y="132" width="14" height="14" rx="3" fill="#e6eef9"/><rect x="112" y="132" width="14" height="14" rx="3" fill="#e6eef9"/></svg>
+        <svg id="logoLilija" viewBox="0 0 200 200" width="40" height="40" aria-hidden="true" style="vertical-align:middle;margin-inline-end:6px"><circle cx="100" cy="100" r="88" fill="none" stroke="#e6eef9" stroke-width="12"/><path d="M60 60 v50 c0 25 20 35 40 35 h35" fill="none" stroke="#e6eef9" stroke-width="12" stroke-linecap="round"/><rect x="86" y="132" width="14" height="14" rx="3" fill="#e6eef9"/><rect x="112" y="132" width="14" height="14" rx="3" fill="#e6eef9"/></svg>
         <span id="currentShopName" class="shop-name">Shop Name</span>
         <bdi id="appVersion" class="app-version" dir="ltr" data-i18n="appName">Lilija — Store Management (v1.1.0)</bdi>
         <small id="bootChecks" class="hint" style="font-weight:normal;font-size:12px;opacity:.8" data-i18n="modulesLoaded">وحدات محمّلة: سجل/مستخدمون</small>
@@ -91,10 +91,6 @@
       <div class="right flex header-actions">
         <span id="whoami" class="hint"></span>
         <button id="btnLogout" class="btn-muted" type="button" hidden data-i18n="btnLogout">🚪 تسجيل خروج</button>
-        <button id="btnBackup" class="btn-muted" type="button" data-i18n="btnBackup">⬇️ تنزيل نسخة احتياطية</button>
-        <input type="file" id="restoreFile" style="display:none" accept="application/json" />
-        <button id="btnRestore" class="btn-muted" type="button" data-i18n="btnRestore">⬆️ استعادة</button>
-        <button id="btnReset" class="btn-danger" type="button" data-i18n="btnReset">♻️ إعادة ضبط</button>
       </div>
     </div>
   </header>
@@ -370,6 +366,15 @@
           <img id="shopLogoPreview" class="shop-logo-preview" style="display:none" data-i18n-alt="logoPreviewAlt" alt="معاينة الشعار" />
           <div class="hint" id="shopLogoHint">اختر صورة لشعار متجرك (PNG, JPG)</div>
         </div>
+      </div>
+      
+      <!-- Data Maintenance Section -->
+      <hr style="margin: 24px 0; border: none; border-top: 1px solid var(--muted);" />
+      <h3 id="dataMaintenanceTitle" data-i18n="dataMaintenanceTitle">🛠️ Data Maintenance</h3>
+      <div class="hint" id="dataMaintenanceHint" data-i18n="dataMaintenanceHint">Operations related to local browser data only.</div>
+      <div style="margin: 16px 0;">
+        <button id="btnReset" class="btn-danger" type="button" data-i18n="btnReset">♻️ Reset</button>
+        <p class="hint" id="resetHint" data-i18n="resetHint" style="margin: 8px 0 0 0; color: var(--danger);">Deletes all local data (products, purchases, sales, settings, users) and cannot be undone.</p>
       </div>
     </section>
 <!-- LILIJA:BEGIN AUDIT_LOG -->
@@ -2341,36 +2346,20 @@ function printPurchaseByPO(po){
     };
   }
 
-  // ====== Backup / Restore / Reset ======
-  const btnBackup = document.getElementById('btnBackup');
-  if (btnBackup) {
-    btnBackup.onclick = ()=>{
-      const blob = new Blob([JSON.stringify(db,null,2)], {type:'application/json'});
-      const a = document.createElement('a'); a.href = URL.createObjectURL(blob); a.download = 'mini-store-backup.json'; document.body.appendChild(a); a.click(); document.body.removeChild(a); URL.revokeObjectURL(a.href);
-    };
+  // ====== Reset Function (moved to General Settings) ======
+  // Reset button handler - moved from header to General Settings panel
+  function initResetButton() {
+    const btnResetEl = document.getElementById('btnReset');
+    if (btnResetEl) {
+      btnResetEl.onclick = ()=>{
+        if(!softConfirm(btnResetEl,'تأكيد إعادة؟')) return;
+        db = deepClone(defaults); saveDB(db); refreshAll(); alert(getTranslation(getUISettings().language, 'systemReset'));
+      };
+    }
   }
   
-  const btnRestore = document.getElementById('btnRestore');
-  if (btnRestore) {
-    btnRestore.onclick = ()=> {
-      const restoreFile = document.getElementById('restoreFile');
-      if (restoreFile) restoreFile.click();
-    };
-  }
-  
-  const restoreFile = document.getElementById('restoreFile');
-  if (restoreFile) {
-    restoreFile.onchange = (e)=>{
-      const file = e.target.files[0]; if(!file) return;
-      const reader = new FileReader(); reader.onload = ()=>{ try{ db = JSON.parse(reader.result); saveDB(db); refreshAll(); alert(getTranslation(getUISettings().language, 'backupRestored')); }catch{ alert(getTranslation(getUISettings().language, 'invalidFile')); } }; reader.readAsText(file);
-      e.target.value='';
-    };
-  }
-  const btnResetEl = document.getElementById('btnReset');
-  btnResetEl.onclick = ()=>{
-    if(!softConfirm(btnResetEl,'تأكيد إعادة؟')) return;
-    db = deepClone(defaults); saveDB(db); refreshAll(); alert(getTranslation(getUISettings().language, 'systemReset'));
-  };
+  // Initialize reset button after DOM is ready
+  document.addEventListener('DOMContentLoaded', initResetButton);
 
   // ====== Soft Confirm ======
   function softConfirm(btn, labelConfirm){

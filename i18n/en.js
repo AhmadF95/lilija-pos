@@ -138,6 +138,12 @@ window.I18N_EN = {
   shopLogoHint: "Choose an image for your shop logo (PNG, JPG)",
   removeLogoHint: "🗑️ Remove Logo",
   logoPreviewAlt: "Logo Preview",
+  
+  // Data Maintenance section
+  dataMaintenanceTitle: "🛠️ Data Maintenance",
+  dataMaintenanceHint: "Operations related to local browser data only.",
+  resetHint: "Deletes all local data (products, purchases, sales, settings, users) and cannot be undone.",
+  
   themeDark: "Dark (Night)",
   themeLight: "Light (Day)",
   languageArabic: "Arabic",
