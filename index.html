@@ -3,7 +3,7 @@
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-  <title>ليليجة — إدارة المتجر (v1.1.0)</title>
+  <title data-i18n="appTitle">Lilija — Store Management (v1.1.0)</title>
   <style>
     /* Dark theme (default) */
     :root{--bg:#0f172a;--panel:#111827;--muted:#1f2937;--text:#e5e7eb;--accent:#22d3ee;--ok:#22c55e;--warn:#f59e0b;--danger:#ef4444}
@@ -67,7 +67,7 @@
       <h1>
         <img id="shopLogoImg" style="display:none" alt="Shop Logo" />
         <svg id="logoLilija" viewBox="0 0 200 200" width="20" height="20" aria-hidden="true" style="vertical-align:-3px;margin-inline-end:6px"><circle cx="100" cy="100" r="88" fill="none" stroke="#e6eef9" stroke-width="12"/><path d="M60 60 v50 c0 25 20 35 40 35 h35" fill="none" stroke="#e6eef9" stroke-width="12" stroke-linecap="round"/><rect x="86" y="132" width="14" height="14" rx="3" fill="#e6eef9"/><rect x="112" y="132" width="14" height="14" rx="3" fill="#e6eef9"/></svg>
-        <span id="shopNameSpan">ليليجة — إدارة المتجر (v1.1.0)</span> 
+        <span id="shopNameSpan" data-i18n="appName">Lilija — Store Management (v1.1.0)</span> 
         <small id="bootChecks" class="hint" style="font-weight:normal;font-size:12px;opacity:.8" data-i18n="modulesLoaded">وحدات محمّلة: سجل/مستخدمون</small>
       </h1>
       <div class="right flex">
@@ -222,15 +222,15 @@
       <!-- التحكم في الرسوم البيانية -->
       <div class="grid" style="margin: 16px 0;">
         <div class="g6">
-          <label>نوع البيانات</label>
+          <label data-i18n="dataTypeLabel">Data type</label>
           <select id="chartDataset">
-            <option value="sales">المبيعات</option>
-            <option value="purchases">المشتريات</option>
-            <option value="profit">الربح</option>
+            <option value="sales" data-i18n="salesLabel">Sales</option>
+            <option value="purchases" data-i18n="purchasesTitle">Purchases</option>
+            <option value="profit" data-i18n="tableProfit">Profit</option>
           </select>
         </div>
         <div class="g6">
-          <label>نوع الرسم البياني</label>
+          <label data-i18n="chartTypeLabel">Chart type</label>
           <select id="chartType">
             <option value="line">خطي</option>
             <option value="bar">أعمدة</option>
@@ -311,19 +311,19 @@
 
     <!-- General Settings -->
     <section class="panel" data-tab="general" hidden>
-      <h2 id="generalSettingsTitle">⚙️ الإعدادات العامة</h2>
+      <h2 id="generalSettingsTitle" data-i18n="generalSettingsTitle">⚙️ General Settings</h2>
       <div class="grid">
         <div class="g6">
-          <label id="languageLabel">🌐 اللغة</label>
+          <label id="languageLabel" data-i18n="languageLabel">🌐 Language</label>
           <select id="uiLanguage">
-            <option value="ar">العربية</option>
-            <option value="en">English</option>
+            <option value="ar" data-i18n="languageArabic">Arabic</option>
+            <option value="en" data-i18n="languageEnglish">English</option>
           </select>
           
-          <label id="themeLabel">🎨 نمط العرض</label>
+          <label id="themeLabel" data-i18n="themeLabel">🎨 Display Theme</label>
           <select id="uiTheme">
-            <option value="dark">ليلي (داكن)</option>
-            <option value="light">نهاري (فاتح)</option>
+            <option value="dark" data-i18n="themeDark">Night (Dark)</option>
+            <option value="light" data-i18n="themeLight">Day (Light)</option>
           </select>
           
           <label id="accentLabel">🎯 اللون المميز</label>
@@ -1286,9 +1286,10 @@ function nextPo(){
     }
   }
 
-  // Initialize language from localStorage or default to Arabic
+  // Initialize language from DB settings, localStorage, or default to English
   function initializeLanguage() {
-    const savedLang = localStorage.getItem('pos.lang') || 'ar';
+    const ui = getUISettings();
+    const savedLang = ui.language || localStorage.getItem('pos.lang') || 'en';
     applyTranslations(savedLang);
     
     // Set the language dropdown if it exists
@@ -1303,23 +1304,23 @@ function nextPo(){
 
   // ====== UI Tabs ======
   const tabsCfg = [
-    {id:'products', label:'📦 المنتجات'},
-    {id:'purchases', label:'⬅️ المشتريات'},
-    {id:'sales', label:'➡️ المبيعات (طلبات)'},
-    {id:'dashboard', label:'📊 لوحة العرض'},
-    {id:'reports', label:'📈 التقارير'},
-    {id:'general', label:'⚙️ الإعدادات العامة'},
-    {id:'settings', label:'⚙️ الإعدادات'},
-    {id:'audit', label:'📝 سجل الحركات'},
+    {id:'products', label:'📦 Products', i18nKey: 'tabProducts'},
+    {id:'purchases', label:'⬅️ Purchases', i18nKey: 'tabPurchases'},
+    {id:'sales', label:'➡️ Sales (Orders)', i18nKey: 'tabSales'},
+    {id:'dashboard', label:'📊 Dashboard', i18nKey: 'tabDashboard'},
+    {id:'reports', label:'📈 Reports', i18nKey: 'tabReports'},
+    {id:'general', label:'⚙️ General Settings', i18nKey: 'tabGeneral'},
+    {id:'settings', label:'⚙️ Settings', i18nKey: 'tabSettings'},
+    {id:'audit', label:'📝 Activity Log', i18nKey: 'tabAudit'},
   ];
   
   // Note: Auth & permissions moved to modules/auth.js
 
   // ====== UI Settings Functions ======
   function getUISettings() {
-    if (!db || !db.settings) return { language: 'ar', theme: 'dark', accent: '#22d3ee', shopName: '', shopLogo: '' };
+    if (!db || !db.settings) return { language: 'en', theme: 'dark', accent: '#22d3ee', shopName: '', shopLogo: '' };
     if (!db.settings.ui) {
-      db.settings.ui = { language: 'ar', theme: 'dark', accent: '#22d3ee', shopName: '', shopLogo: '' };
+      db.settings.ui = { language: 'en', theme: 'dark', accent: '#22d3ee', shopName: '', shopLogo: '' };
     }
     return db.settings.ui;
   }
@@ -1394,7 +1395,8 @@ function nextPo(){
     tabsCfg.forEach(t => {
       const b = document.createElement('button');
       b.className = 'tab';
-      b.textContent = i18n[lang][t.id] || t.label;
+      // Use getTranslation function with the i18nKey, fallback to built-in i18n, then to label
+      b.textContent = getTranslation(lang, t.i18nKey) || i18n[lang][t.id] || t.label;
       b.dataset.tab = t.id;
       tabsEl.appendChild(b);
     });
@@ -1468,7 +1470,7 @@ function nextPo(){
 
   const tabsEl = document.getElementById('tabs');
   // Initial tab rendering (will be updated by applyUISettings)
-  tabsCfg.forEach(t=>{ const b = document.createElement('button'); b.className='tab'; b.textContent=t.label; b.dataset.tab=t.id; if(tabsEl) tabsEl.appendChild(b); });
+  tabsCfg.forEach(t=>{ const b = document.createElement('button'); b.className='tab'; b.textContent=t.label; b.dataset.tab=t.id; b.setAttribute('data-i18n', t.i18nKey || t.id); if(tabsEl) tabsEl.appendChild(b); });
   
   function activateTab(id){
     document.querySelectorAll('.tab').forEach(b=>b.classList.toggle('active', b.dataset.tab===id));

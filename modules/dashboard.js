@@ -260,7 +260,11 @@
       ctx.fillStyle = '#6b7280';
       ctx.font = '14px system-ui';
       ctx.textAlign = 'center';
-      ctx.fillText('لا توجد بيانات للعرض', width / 2, height / 2);
+      // Use translation if available, fallback to English
+      var noDataText = (window.I18N_AR && window.I18N_AR.noDataToDisplay) || 
+                       (window.I18N_EN && window.I18N_EN.noDataToDisplay) || 
+                       'No data to display';
+      ctx.fillText(noDataText, width / 2, height / 2);
       return;
     }
 
