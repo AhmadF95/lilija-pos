@@ -2617,6 +2617,10 @@ async function confirmDeleteUniversal(module, id, name = '', extraQty = '') {
   })();
   </script>
 
+  <!-- i18n translation files -->
+  <script src="i18n/en.js"></script>
+  <script src="i18n/ar.js"></script>
+  
   <!-- LILIJA modules -->
   <script src="modules/utils.js"></script>
   <script src="modules/auth.js"></script>
@@ -2624,6 +2628,9 @@ async function confirmDeleteUniversal(module, id, name = '', extraQty = '') {
   <script src="modules/users_admin.js"></script>
   <script src="modules/audit_log.js"></script>
   <script src="modules/dashboard.js"></script>
+  
+  <!-- i18n runtime patch -->
+  <script src="scripts/i18n-fix.js"></script>
 
   <script>
     document.addEventListener('DOMContentLoaded', () => {
