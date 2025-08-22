@@ -54,6 +54,23 @@
     .shop-logo-controls{display:flex;gap:8px;margin-top:8px;align-items:center}
     #shopLogoImg{height:20px;border-radius:4px;margin-inline-end:8px}
 
+    /* Header RTL/LTR styles */
+    .app-header{gap:10px}
+    .shop-name{font-size:20px;font-weight:600}
+    .app-version{font-size:14px;font-weight:300;opacity:.8;margin-inline-start:6px}
+    
+    /* RTL-specific header layout */
+    [dir="rtl"] .app-header{flex-direction:row-reverse}
+    [dir="rtl"] .header-actions{flex-direction:row-reverse}
+    [dir="rtl"] .wrap.flex{flex-direction:row-reverse}
+    [dir="rtl"] .app-version{margin-inline-start:0;margin-inline-end:6px}
+    [dir="rtl"] .shop-name{text-align:right}
+    [dir="rtl"] #shopLogoImg{margin-inline-start:8px;margin-inline-end:0}
+    
+    /* Maintain button order in actions group */
+    [dir="rtl"] .header-actions .btn-muted,
+    [dir="rtl"] .header-actions .btn-danger{order:0}
+
     /* Auth overlay */
     .overlay{position:fixed;inset:0;background:var(--bg)f0;backdrop-filter:blur(3px);display:flex;align-items:center;justify-content:center;z-index:9999}
     .card{width:min(94vw,420px);background:var(--panel);border:1px solid var(--muted);border-radius:14px;padding:18px}
@@ -64,13 +81,14 @@
 <body>
   <header>
     <div class="wrap flex">
-      <h1>
+      <h1 class="app-header">
         <img id="shopLogoImg" style="display:none" alt="Shop Logo" />
         <svg id="logoLilija" viewBox="0 0 200 200" width="20" height="20" aria-hidden="true" style="vertical-align:-3px;margin-inline-end:6px"><circle cx="100" cy="100" r="88" fill="none" stroke="#e6eef9" stroke-width="12"/><path d="M60 60 v50 c0 25 20 35 40 35 h35" fill="none" stroke="#e6eef9" stroke-width="12" stroke-linecap="round"/><rect x="86" y="132" width="14" height="14" rx="3" fill="#e6eef9"/><rect x="112" y="132" width="14" height="14" rx="3" fill="#e6eef9"/></svg>
-        <span id="shopNameSpan" data-i18n="appName">Lilija — Store Management (v1.1.0)</span> 
+        <span id="currentShopName" class="shop-name">Shop Name</span>
+        <bdi id="appVersion" class="app-version" dir="ltr" data-i18n="appName">Lilija — Store Management (v1.1.0)</bdi>
         <small id="bootChecks" class="hint" style="font-weight:normal;font-size:12px;opacity:.8" data-i18n="modulesLoaded">وحدات محمّلة: سجل/مستخدمون</small>
       </h1>
-      <div class="right flex">
+      <div class="right flex header-actions">
         <span id="whoami" class="hint"></span>
         <button id="btnLogout" class="btn-muted" type="button" hidden data-i18n="btnLogout">🚪 تسجيل خروج</button>
         <button id="btnBackup" class="btn-muted" type="button" data-i18n="btnBackup">⬇️ تنزيل نسخة احتياطية</button>
@@ -1369,7 +1387,8 @@ function nextPo(){
     // Update header logo and name
     const shopLogoImg = document.getElementById('shopLogoImg');
     const logoLilija = document.getElementById('logoLilija');
-    const shopNameSpan = document.getElementById('shopNameSpan');
+    const currentShopName = document.getElementById('currentShopName');
+    const appVersion = document.getElementById('appVersion');
     
     if (ui.shopLogo) {
       shopLogoImg.src = ui.shopLogo;
@@ -1380,10 +1399,21 @@ function nextPo(){
       logoLilija.style.display = 'inline';
     }
     
-    if (ui.shopName) {
-      shopNameSpan.textContent = ui.shopName;
-    } else {
-      shopNameSpan.textContent = getTranslation(ui.language, 'appTitle');
+    // Update shop name (larger text)
+    if (currentShopName) {
+      if (ui.shopName) {
+        currentShopName.textContent = ui.shopName;
+        currentShopName.style.display = 'inline';
+      } else {
+        currentShopName.style.display = 'none';
+      }
+    }
+    
+    // Update app version (smaller branding text) - will be handled by i18n
+    if (appVersion) {
+      // The appVersion element uses data-i18n="appName", so translation will be handled automatically
+      // We just ensure the dir="ltr" attribute is maintained for bidi isolation
+      appVersion.setAttribute('dir', 'ltr');
     }
     
     // Update user status text
@@ -2718,6 +2748,9 @@ async function confirmDeleteUniversal(module, id, name = '', extraQty = '') {
   
   <!-- i18n runtime patch -->
   <script src="scripts/i18n-fix.js"></script>
+  
+  <!-- Direction sync for RTL/LTR handling -->
+  <script src="scripts/dir-sync.js"></script>
 
   <script>
     document.addEventListener('DOMContentLoaded', () => {
