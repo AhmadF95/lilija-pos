@@ -1,2647 +1,44 @@
-<!DOCTYPE html>
-<html lang="ar" dir="rtl">
-<head>
-  <meta charset="UTF-8" />
-  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-  <title>ليليجة — إدارة المتجر (v1.1.0)</title>
-  <style>
-    /* Dark theme (default) */
-    :root{--bg:#0f172a;--panel:#111827;--muted:#1f2937;--text:#e5e7eb;--accent:#22d3ee;--ok:#22c55e;--warn:#f59e0b;--danger:#ef4444}
-    
-    /* Light theme */
-    :root[data-theme='light']{
-      --bg:#f6f7fb;--panel:#ffffff;--muted:#e5e7eb;--text:#0b1023;--accent:var(--accent-color, #0ea5e9);
-      --ok:#16a34a;--warn:#ca8a04;--danger:#dc2626;
+<! -- language selector and initialization snippets -->
+<select id="uiLanguage" name="uiLanguage" aria-label="UI language">
+  <option value="en" data-i18n="languageNameEn">English</option>
+  <option value="ar" data-i18n="languageNameAr">Arabic</option>
+</select>
+
+<script>
+function initializeLanguage() {
+  var lang = 'en';
+  try {
+    if (typeof getUISettings === 'function') {
+      var ui = getUISettings();
+      if (ui && ui.language) lang = ui.language;
     }
-    
-    *{box-sizing:border-box;font-family:system-ui,Segoe UI,Roboto,Arial}
-    body{margin:0;background:linear-gradient(180deg,var(--bg),var(--muted));color:var(--text)}
-    header{position:sticky;top:0;background:var(--bg)cc;backdrop-filter:blur(6px);z-index:10;border-bottom:1px solid var(--muted)}
-    .wrap{max-width:1100px;margin:auto;padding:16px}
-    h1{margin:0;font-size:20px;display:flex;align-items:center;gap:10px}
-    h2{margin:16px 0 8px}
-    .tabs{display:flex;gap:8px;flex-wrap:wrap;margin-top:10px}
-    .tab{padding:8px 12px;border:1px solid var(--muted);border-radius:10px;background:var(--panel);cursor:pointer}
-    .tab.active{border-color:var(--accent);box-shadow:0 0 0 2px var(--accent)22}
-    .panel{background:var(--panel);border:1px solid var(--muted);border-radius:14px;padding:14px;margin-top:14px}
-    label{display:block;margin:8px 0 4px}
-    input,select{width:100%;padding:9px 10px;border-radius:10px;border:1px solid var(--muted);background:var(--bg);color:var(--text)}
-    .grid{display:grid;grid-template-columns:repeat(12,1fr);gap:12px}
-    .g6{grid-column:span 6}.g4{grid-column:span 4}.g3{grid-column:span 3}.g8{grid-column:span 8}.g12{grid-column:span 12}
-    @media(max-width:900px){.g6,.g4,.g3,.g8{grid-column:span 12}}
-    button{padding:10px 14px;border-radius:10px;border:1px solid var(--muted);background:var(--panel);color:var(--text);cursor:pointer}
-    .btn-primary{background:linear-gradient(90deg,var(--accent),var(--accent));color:var(--panel);border:none}
-    .btn-danger{background:var(--danger);border:1px solid var(--danger);color:white}
-    .btn-muted{background:var(--panel);border:1px solid var(--muted)}
-    table{width:100%;border-collapse:collapse;margin-top:10px}
-    th,td{border-bottom:1px dashed var(--muted);padding:10px;text-align:right}
-    tr:hover{background:var(--muted)}
-    .kpis{display:grid;grid-template-columns:repeat(4,1fr);gap:12px}
-    .kpi{border:1px solid var(--muted);background:var(--panel);border-radius:14px;padding:12px}
-    .tag{display:inline-block;padding:2px 8px;border-radius:20px;font-size:12px;border:1px solid var(--muted)}
-    .tag.warn{border-color:var(--warn);color:var(--warn)}
-    .tag.danger{border-color:var(--danger);color:var(--danger)}
-    .tag.ok{border-color:var(--ok);color:var(--ok)}
-    .flex{display:flex;gap:10px;align-items:center;flex-wrap:wrap}
-    .right{margin-inline-start:auto}
-    .hint{font-size:12px;opacity:.75}
-
-    /* General Settings specific styles */
-    .color-swatches{display:flex;gap:8px;flex-wrap:wrap;margin-top:8px}
-    .color-swatch{width:24px;height:24px;border-radius:6px;cursor:pointer;border:2px solid transparent}
-    .color-swatch:hover,.color-swatch.selected{border-color:var(--text)}
-    .shop-logo-preview{max-height:40px;margin-top:8px;border-radius:6px}
-    .shop-logo-controls{display:flex;gap:8px;margin-top:8px;align-items:center}
-    #shopLogoImg{height:20px;border-radius:4px;margin-inline-end:8px}
-
-    /* Auth overlay */
-    .overlay{position:fixed;inset:0;background:var(--bg)f0;backdrop-filter:blur(3px);display:flex;align-items:center;justify-content:center;z-index:9999}
-    .card{width:min(94vw,420px);background:var(--panel);border:1px solid var(--muted);border-radius:14px;padding:18px}
-    .card h3{margin:0 0 8px 0}
-    .is-hidden{display:none !important;visibility:hidden !important;opacity:0 !important}
-  </style>
-</head>
-<body>
-  <header>
-    <div class="wrap flex">
-      <h1>
-        <img id="shopLogoImg" style="display:none" alt="Shop Logo" />
-        <svg id="logoLilija" viewBox="0 0 200 200" width="20" height="20" aria-hidden="true" style="vertical-align:-3px;margin-inline-end:6px"><circle cx="100" cy="100" r="88" fill="none" stroke="#e6eef9" stroke-width="12"/><path d="M60 60 v50 c0 25 20 35 40 35 h35" fill="none" stroke="#e6eef9" stroke-width="12" stroke-linecap="round"/><rect x="86" y="132" width="14" height="14" rx="3" fill="#e6eef9"/><rect x="112" y="132" width="14" height="14" rx="3" fill="#e6eef9"/></svg>
-        <span id="shopNameSpan">ليليجة — إدارة المتجر (v1.1.0)</span> 
-        <small id="bootChecks" class="hint" style="font-weight:normal;font-size:12px;opacity:.8" data-i18n="modulesLoaded">وحدات محمّلة: سجل/مستخدمون</small>
-      </h1>
-      <div class="right flex">
-        <span id="whoami" class="hint"></span>
-        <button id="btnLogout" class="btn-muted" type="button" hidden data-i18n="btnLogout">🚪 تسجيل خروج</button>
-        <button id="btnBackup" class="btn-muted" type="button" data-i18n="btnBackup">⬇️ تنزيل نسخة احتياطية</button>
-        <input type="file" id="restoreFile" style="display:none" accept="application/json" />
-        <button id="btnRestore" class="btn-muted" type="button" data-i18n="btnRestore">⬆️ استعادة</button>
-        <button id="btnReset" class="btn-danger" type="button" data-i18n="btnReset">♻️ إعادة ضبط</button>
-      </div>
-    </div>
-  </header>
-  <!-- Auth Overlay -->
-  <div id="authOverlay" class="overlay is-hidden" aria-hidden="true">
-    <div class="card" id="authCard">
-      <h3 id="authTitle" data-i18n="authTitleLogin">تسجيل الدخول</h3>
-      <div id="authBody"></div>
-    </div>
-  </div>
-
-  <main class="wrap" id="appRoot" hidden>
-    <div class="tabs" id="tabs"></div>
-
-    <!-- منتجات -->
-    <section class="panel" data-tab="products">
-      <h2 data-i18n="productsTitle">المنتجات</h2>
-      <div class="grid">
-        <div class="g4">
-          <label data-i18n="productNameLabel">اسم المنتج</label><input id="pName" data-i18n-placeholder="productNamePlaceholder" placeholder="مثل: تمر خلاص 500غ" />
-          <label data-i18n="skuLabel">الباركود / SKU</label><input id="pSku" data-i18n-placeholder="skuPlaceholder" placeholder="اختياري" />
-          <label data-i18n="categoryLabel">الفئة</label><input id="pCat" data-i18n-placeholder="categoryPlaceholder" placeholder="مثل: تمور" />
-          <label data-i18n="priceLabel">سعر البيع الافتراضي (AED)</label><input id="pPrice" type="number" step="0.01" data-i18n-placeholder="pricePlaceholder" placeholder="مثال: 15.00" />
-          <button class="btn-primary" id="addProduct" type="button" data-i18n="btnAddProduct">➕ إضافة منتج</button>
-          <div class="hint" data-i18n="productsHint">يتم استخدام قائمة المنتجات في جميع الشاشات الأخرى تلقائيًا.</div>
-        </div>
-        <div class="g8">
-          <div class="flex"><div class="hint" data-i18n="productsTableTitle">جدول المنتجات</div><div class="right"><button id="exportProducts" type="button" class="btn-muted" data-export="1" data-table="productsTable" data-filename="products.csv" data-i18n="btnExport">⬇️ تصدير (Excel)</button></div></div>
-          <table id="productsTable">
-            <thead><tr><th data-i18n="thProduct">المنتج</th><th data-i18n="thSKU">SKU</th><th data-i18n="thCategory">الفئة</th><th data-i18n="thPrice">سعر البيع</th><th data-i18n="thStock">المخزون</th><th></th></tr></thead>
-            <tbody></tbody>
-          </table>
-        </div>
-      </div>
-    </section>
-
-    <!-- مشتريات -->
-    <section class="panel" data-tab="purchases" hidden>
-      <h2 data-i18n="purchasesTitle">المشتريات (وارد للمخزون)</h2>
-      <div class="grid">
-        <div class="g4">
-          <label data-i18n="selectProduct">المنتج</label>
-          <select id="buyProduct"></select>
-          <label data-i18n="quantityLabel">الكمية</label><input id="buyQty" type="number" step="1" min="1" />
-          <label data-i18n="costLabel">سعر التكلفة للوحدة (AED)</label><input id="buyCost" type="number" step="0.01" />
-          <label data-i18n="dateLabel">التاريخ</label><input id="buyDate" type="date" />
-          <button class="btn-primary" id="addPurchase" type="button" data-i18n="btnAddPurchase">➕ إضافة عملية شراء</button>
-        </div>
-        <div class="g8">
-          <div class="flex"><div class="hint" data-i18n="purchasesTableTitle">جدول المشتريات</div><div class="right"><button id="exportPurchases" type="button" class="btn-muted" data-export="1" data-table="purchasesTable" data-filename="purchases.csv" data-i18n="btnExport">⬇️ تصدير (Excel)</button></div></div>
-          <table id="purchasesTable">
-            <thead><tr><th data-i18n="thDate">التاريخ</th><th data-i18n="thProduct">المنتج</th><th data-i18n="thQuantity">الكمية</th><th data-i18n="thUnitCost">تكلفة الوحدة</th><th data-i18n="thTotal">الإجمالي</th><th data-i18n="thSupplier">اسم المورد</th><th data-i18n="thSupplierPhone">رقم المورد</th><th data-i18n="thPO">PO#</th><th></th></tr></thead>
-            <tbody></tbody>
-          </table>
-        </div>
-      </div>
-    </section>
-
-    <!-- مبيعات -->
-    <section class="panel" data-tab="sales" hidden>
-      <h2 data-i18n="salesTitle">المبيعات (طلب متعدد الأصناف)</h2>
-      <div class="grid">
-        <div class="g4">
-          <label data-i18n="selectProductSell">اختر المنتج</label>
-          <select id="sellProduct"></select>
-          <label data-i18n="sellQuantityLabel">الكمية</label><input id="sellQty" type="number" step="1" min="1" value="1" />
-          <label data-i18n="sellPriceLabel">سعر الوحدة (من صفحة المنتجات، قابل للتعديل)</label><input id="sellPrice" type="number" step="0.01" />
-          <div class="grid">
-            <div class="g6">
-              <label data-i18n="discountTypeLabel">نوع الخصم على المنتج</label>
-              <select id="lineDiscType">
-                <option value="none">بدون خصم</option>
-                <option value="amount">خصم مبلغ</option>
-                <option value="percent">خصم نسبة %</option>
-              </select>
-            </div>
-            <div class="g6">
-              <label data-i18n="discountValueLabel">قيمة الخصم</label>
-              <input id="lineDiscVal" type="number" step="0.01" value="0" />
-            </div>
-          </div>
-          <label data-i18n="deliveryFeeLabel">رسوم التوصيل (اختياري)</label>
-          <input id="deliveryFee" type="number" step="0.01" value="0" />
-          <label data-i18n="customerNameLabel">اسم العميل (اختياري)</label>
-          <input id="customerName" type="text" data-i18n-placeholder="customerNamePlaceholder" placeholder="اكتب اسم العميل" />
-          <label data-i18n="customerPhoneLabel">رقم الهاتف (اختياري)</label>
-          <input id="customerPhone" type="tel" data-i18n-placeholder="customerPhonePlaceholder" placeholder="اكتب رقم الهاتف" />
-          <button class="btn-primary" id="addLine" type="button" data-i18n="btnAddLine">➕ إضافة للطلب</button>
-          <label style="margin-top:12px" data-i18n="orderDateLabel">تاريخ الطلب</label><input id="orderDate" type="date" />
-          <button class="btn-primary" id="saveOrder" type="button" style="margin-top:8px" data-i18n="btnSaveOrder">💾 حفظ الطلب</button>
-        </div>
-        <div class="g8">
-          <div class="flex"><h3 style="margin:0" data-i18n="cartTitle">سلة الطلب</h3><div class="right"><button id="exportCart" type="button" class="btn-muted" data-export="1" data-table="cartTable" data-filename="cart.csv" data-i18n="btnExport">⬇️ تصدير (Excel)</button></div></div>
-          <table id="cartTable">
-            <thead><tr><th data-i18n="thProduct">المنتج</th><th data-i18n="thQuantity">الكمية</th><th data-i18n="thPrice">سعر الوحدة</th><th data-i18n="thDiscount">خصم</th><th data-i18n="thTotal">الإجمالي</th><th></th></tr></thead>
-            <tbody></tbody>
-            <tfoot><tr><th colspan="4" style="text-align:left" data-i18n="orderTotalLabel">إجمالي الطلب</th><th id="orderTotalCell">0.00</th><th></th></tr></tfoot>
-          </table>
-
-          <div class="flex" style="margin-top:18px"><h3 style="margin:0" data-i18n="previousOrdersTitle">الطلبات السابقة</h3><div class="right">
-            <button id="exportOrders" type="button" class="btn-muted" data-export="1" data-table="ordersTable" data-filename="orders.csv" data-i18n="btnExport">⬇️ تصدير (Excel)</button>
-          </div></div>
-          <table id="ordersTable">
-            <thead><tr><th data-i18n="thDate">التاريخ</th><th data-i18n="thItems">عدد الأصناف</th><th data-i18n="thOrderTotal">إجمالي الطلب</th><th data-i18n="thCustomerName">اسم العميل</th><th data-i18n="thCustomerPhone">رقم الهاتف</th><th data-i18n="thOptions">خيارات</th></tr></thead>
-            <tbody></tbody>
-          </table>
-        </div>
-      </div>
-    </section>
-
-    <!-- لوحة العرض -->
-    <section class="panel" data-tab="dashboard" hidden>
-      <h2 data-i18n="dashboardTitle">لوحة العرض</h2>
-      
-      <!-- فترة التقرير -->
-      <div class="grid" style="margin-bottom: 16px;">
-        <div class="g6">
-          <label data-i18n="reportPeriodLabel">فترة التقرير</label>
-          <div class="flex" style="gap: 8px;">
-            <button type="button" class="tab" id="periodToday" data-period="today" data-i18n="btnToday">اليوم</button>
-            <button type="button" class="tab" id="periodWeek" data-period="week" data-i18n="btnWeek">هذا الأسبوع</button>
-            <button type="button" class="tab" id="periodMonth" data-period="month">هذا الشهر</button>
-            <button type="button" class="tab" id="periodCustom" data-period="custom">فترة مخصصة</button>
-          </div>
-        </div>
-        <div class="g6" id="customDateRange" hidden>
-          <div class="flex" style="gap: 8px;">
-            <div>
-              <label>من تاريخ</label>
-              <input type="date" id="customStartDate" />
-            </div>
-            <div>
-              <label>إلى تاريخ</label>
-              <input type="date" id="customEndDate" />
-            </div>
-          </div>
-        </div>
-      </div>
-
-      <!-- المؤشرات الرئيسية -->
-      <div class="kpis" id="dashboardKpis"></div>
-
-      <!-- التحكم في الرسوم البيانية -->
-      <div class="grid" style="margin: 16px 0;">
-        <div class="g6">
-          <label>نوع البيانات</label>
-          <select id="chartDataset">
-            <option value="sales">المبيعات</option>
-            <option value="purchases">المشتريات</option>
-            <option value="profit">الربح</option>
-          </select>
-        </div>
-        <div class="g6">
-          <label>نوع الرسم البياني</label>
-          <select id="chartType">
-            <option value="line">خطي</option>
-            <option value="bar">أعمدة</option>
-            <option value="pie">دائري</option>
-          </select>
-        </div>
-      </div>
-
-      <!-- الرسم البياني -->
-      <div style="background: #0b1224; border: 1px solid #1f2a44; border-radius: 14px; padding: 14px; margin: 16px 0;">
-        <canvas id="dashboardChart" width="800" height="400" style="width: 100%; height: 300px; max-width: 800px;"></canvas>
-      </div>
-
-      <!-- جدول الملخص اليومي -->
-      <div class="flex" style="margin-top: 18px;">
-        <h3 style="margin: 0">الملخص اليومي</h3>
-        <div class="right">
-          <button id="exportDashboardSummary" type="button" class="btn-muted" data-export="1" data-table="dashboardSummaryTable" data-filename="dashboard-summary.csv">⬇️ تصدير (Excel)</button>
-        </div>
-      </div>
-      <table id="dashboardSummaryTable">
-        <thead>
-          <tr>
-            <th>التاريخ</th>
-            <th>إجمالي المبيعات</th>
-            <th>إجمالي المشتريات</th>
-            <th>الربح</th>
-          </tr>
-        </thead>
-        <tbody></tbody>
-      </table>
-    </section>
-
-    <!-- تقارير -->
-    <section class="panel" data-tab="reports" hidden>
-      <h2 data-i18n="reportsTitle">التقارير</h2>
-      <div class="kpis" id="kpis"></div>
-      <div class="flex"><h3 style="margin:0" data-i18n="lowStockSectionTitle">أدنى مخزون</h3><div class="right"><button id="exportLowStock" type="button" class="btn-muted" data-export="1" data-table="lowStockTable" data-filename="low-stock.csv" data-i18n="exportExcelBtn">⬇️ تصدير (Excel)</button></div></div>
-      <table id="lowStockTable">
-        <thead><tr><th data-i18n="thProduct">المنتج</th><th data-i18n="thAvailable">المتوفر</th><th data-i18n="thStatus">حالة</th></tr></thead>
-        <tbody></tbody>
-      </table>
-      <div class="flex" style="margin-top:18px"><h3 style="margin:0" data-i18n="topProductsSectionTitle">أفضل المنتجات مبيعًا</h3><div class="right"><button id="exportTopProducts" type="button" class="btn-muted" data-export="1" data-table="topProductsTable" data-filename="top-products.csv" data-i18n="exportExcelBtn">⬇️ تصدير (Excel)</button></div></div>
-      <table id="topProductsTable">
-        <thead><tr><th data-i18n="thProduct">المنتج</th><th data-i18n="thQuantitySold">الكمية المباعة</th><th data-i18n="thRevenue">الإيراد</th></tr></thead>
-        <tbody></tbody>
-      </table>
-    </section>
-
-    <!-- الإعدادات -->
-    <section class="panel" data-tab="settings" hidden>
-      <h2 data-i18n="settingsTitle">إعدادات</h2>
-      <div class="grid">
-        <div class="g6">
-          <label data-i18n="lowStockThresholdLabel">حد التنبيه لانخفاض المخزون (لكل منتج)</label>
-          <input id="lowStockThreshold" type="number" min="0" step="1" />
-          <button class="btn-primary" id="saveSettings" type="button" data-i18n="saveSettingsBtn">💾 حفظ الإعدادات</button>
-          <div class="hint" data-i18n="lowStockHint">يظهر تنبيه "منخفض" عندما يقل رصيد المنتج عن هذا الحد.</div>
-        </div>
-        <div class="g6">
-          <h3 style="margin-top:0" data-i18n="passwordSectionTitle">كلمة المرور</h3>
-          <label data-i18n="currentPasswordLabel">كلمة المرور الحالية</label><input id="curPass" type="password" />
-          <label data-i18n="newPasswordLabel">كلمة المرور الجديدة</label><input id="newPass" type="password" />
-          <label data-i18n="confirmNewPasswordLabel">تأكيد كلمة المرور الجديدة</label><input id="newPass2" type="password" />
-          <button class="btn-primary" id="btnChangePass" type="button" data-i18n="btnChangePassword">🔐 تغيير كلمة المرور</button>
-          <div class="hint" data-i18n="passwordHint">تُخزن كلمة المرور بشكل مُشفّر محليًا في متصفحك.</div>
-        </div>
-      </div>
-    
-      <!-- LILIJA:BEGIN USERS_ADMIN -->
-<div id="usersAdminSection">
-        <hr style="border-color:var(--muted);margin:18px 0" />
-        <h3 data-i18n="usersTitle">المستخدمون والصلاحيات</h3>
-        <div id="usersAdminWrap"></div>
-      </div>
-<!-- LILIJA:END USERS_ADMIN -->
-</section>
-
-    <!-- General Settings -->
-    <section class="panel" data-tab="general" hidden>
-      <h2 id="generalSettingsTitle">⚙️ الإعدادات العامة</h2>
-      <div class="grid">
-        <div class="g6">
-          <label id="languageLabel">🌐 اللغة</label>
-          <select id="uiLanguage">
-            <option value="ar">العربية</option>
-            <option value="en">English</option>
-          </select>
-          
-          <label id="themeLabel">🎨 نمط العرض</label>
-          <select id="uiTheme">
-            <option value="dark">ليلي (داكن)</option>
-            <option value="light">نهاري (فاتح)</option>
-          </select>
-          
-          <label id="accentLabel">🎯 اللون المميز</label>
-          <input type="color" id="uiAccent" value="#22d3ee" style="width:60px;height:40px;padding:2px;border-radius:8px" />
-          <div class="color-swatches">
-            <div class="color-swatch" style="background:#22d3ee" data-color="#22d3ee" data-i18n-title="colorCyan" title="سماوي"></div>
-            <div class="color-swatch" style="background:#39ff14" data-color="#39ff14" data-i18n-title="colorNeonGreen" title="أخضر نيون"></div>
-            <div class="color-swatch" style="background:#ff00ff" data-color="#ff00ff" data-i18n-title="colorNeonPurple" title="بنفسجي نيون"></div>
-            <div class="color-swatch" style="background:#00ffff" data-color="#00ffff" data-i18n-title="colorNeonBlue" title="أزرق نيون"></div>
-            <div class="color-swatch" style="background:#ff5f1f" data-color="#ff5f1f" data-i18n-title="colorNeonOrange" title="برتقالي نيون"></div>
-            <div class="color-swatch" style="background:#8a2be2" data-color="#8a2be2" data-i18n-title="colorPurple" title="بنفسجي"></div>
-          </div>
-          <div class="hint" id="accentHint">انقر على أحد الألوان أو اختر لون مخصص</div>
-        </div>
-        
-        <div class="g6">
-          <label id="shopNameLabel">🏪 اسم المتجر</label>
-          <input type="text" id="shopName" data-i18n-placeholder="shopNamePlaceholder" placeholder="اسم متجرك" />
-          <div class="hint" id="shopNameHint">سيظهر في رأس الصفحة</div>
-          
-          <label id="shopLogoLabel">🖼️ شعار المتجر</label>
-          <input type="file" id="shopLogoFile" accept="image/*" />
-          <div class="shop-logo-controls">
-            <button type="button" id="removeLogoBtn" class="btn-muted" style="display:none" id="removeLogoHint">🗑️ إزالة الشعار</button>
-          </div>
-          <img id="shopLogoPreview" class="shop-logo-preview" style="display:none" data-i18n-alt="logoPreviewAlt" alt="معاينة الشعار" />
-          <div class="hint" id="shopLogoHint">اختر صورة لشعار متجرك (PNG, JPG)</div>
-        </div>
-      </div>
-    </section>
-<!-- LILIJA:BEGIN AUDIT_LOG -->
-<section class="panel" data-tab="audit" hidden>
-  <h2 data-i18n="auditTitle">سجل الحركات</h2>
-  <div class="hint" data-i18n="auditHint">يسجّل جميع الإضافات/التعديلات/الحذف مع اسم المستخدم والوقت.</div>
-  <div class="flex" style="gap:8px;margin:8px 0">
-    <input id="auditSearch" data-i18n-placeholder="auditSearchPlaceholder" placeholder="ابحث بالاسم/النوع/المستخدم..." />
-    <button id="btnAuditExport" type="button" data-i18n="btnAuditExport">⬇️ تصدير CSV</button>
-    <button id="btnAuditClear" class="btn-danger" type="button" data-i18n="btnAuditClear">🗑️ مسح السجل</button>
-  </div>
-  <div class="table-wrap">
-    <table id="auditTable">
-      <thead><tr><th data-i18n="thTime">الوقت</th><th data-i18n="thUser">المستخدم</th><th data-i18n="thModule">الوحدة</th><th data-i18n="thAction">الإجراء</th><th data-i18n="thRefId">المعرّف</th><th data-i18n="thDetails">الاسم/التفاصيل</th><th data-i18n="thQuantity">الكمية</th></tr></thead>
-      <tbody></tbody>
-    </table>
-  </div>
-</section>
-<!-- LILIJA:END AUDIT_LOG -->
-
-  
-
-  </main>
-
-  <script>
-  
-  // ====== Users Admin (inside Settings) ======
-  function renderUsersAdmin(){
-    ensureUserSchema();
-    const section = document.getElementById('usersAdminSection');
-    const wrap = document.getElementById('usersAdminWrap');
-    if(!section || !wrap) return;
-    const me = currentUser(); const isAdmin = me && (me.type==='admin' || me.isRoot===true);
-    section.style.display = isAdmin ? '' : 'none';
-    if(!isAdmin){ wrap.innerHTML=''; return; }
-
-    const users = loadUsers();
-    const isRoot = me && me.isRoot === true;
-    const canCreate = isRoot && users.length < 5;
-
-    let htmlUI = '<div class="hint">'+(isRoot?getTranslation(getUISettings().language, 'usersHintRoot'):getTranslation(getUISettings().language, 'usersHintView'))+'</div>';
-    if(isRoot){
-      htmlUI += '<div class="flex" style="gap:8px;margin:8px 0"><button id="btnCreateUser" class="btn-primary" type="button">'+getTranslation(getUISettings().language, 'btnCreateUser')+'</button><span class="hint">(' + users.length + '/5)</span></div>';
-    }
-    const lang = getUISettings().language;
-    htmlUI += '<div class="table-wrap"><table><thead><tr><th>'+getTranslation(lang, 'thUsername')+'</th><th>'+getTranslation(lang, 'thType')+'</th><th>'+getTranslation(lang, 'products')+'</th><th>'+getTranslation(lang, 'sales')+'</th><th>'+getTranslation(lang, 'purchases')+'</th><th>'+getTranslation(lang, 'thUsers')+'</th><th>'+getTranslation(lang, 'thSettings')+'</th><th>'+getTranslation(lang, 'thAudit')+'</th><th></th></tr></thead><tbody>';
-
-    function permCells(u, mod){
-      const p=(u.perms&&u.perms[mod])||{};
-      function cb(act, lbl){
-        const checked = (u.type==='admin') ? 'checked disabled' : (p[act]?'checked':'');
-        return '<label class="hint" style="display:inline-flex;gap:4px;align-items:center;margin:0 6px"><input data-uid="'+u.username+'" data-mod="'+mod+'" data-act="'+act+'" type="checkbox" '+checked+' /><span>'+lbl+'</span></label>';
-      }
-      return u.isRoot ? '—' : cb('view',getTranslation(getUISettings().language, 'permissionView')) + cb('edit',getTranslation(getUISettings().language, 'permissionEdit')) + cb('delete',getTranslation(getUISettings().language, 'permissionDelete'));
-    }
-
-    users.forEach(u=>{
-      htmlUI += '<tr><td>'+u.username+'</td><td>'+(u.isRoot? '<span class="hint">'+getTranslation(getUISettings().language, 'rootAdminLabel')+'</span>' : `<select data-role="${u.username}"><option value="user" ${u.type==='user'?'selected':''}>User</option><option value="admin" ${u.type==='admin'?'selected':''}>Admin</option></select>` )+'</td>'
-      + '<td>'+permCells(u,'products')+'</td>'
-      + '<td>'+permCells(u,'sales')+'</td>'
-      + '<td>'+permCells(u,'purchases')+'</td>'
-      + '<td>'+permCells(u,'users')+'</td>'
-      + '<td>'+permCells(u,'settings')+'</td>'
-      + '<td>'+permCells(u,'audit')+'</td>'
-      + '<td>'+(u.isRoot ? '' : `<button class="btn-danger" data-remove="${u.username}" type="button">حذف</button>` )+'</td></tr>';
-    });
-
-    htmlUI += '</tbody></table></div>';
-    wrap.innerHTML = htmlUI;
-
-    wrap.onchange = (e)=>{
-      const uname = e.target.getAttribute('data-role');
-      if(uname){
-        const list = loadUsers(); const u = list.find(x=>x.username===uname); if(!u) return;
-        if(u.isRoot) { e.target.value = 'admin'; return; }
-        const nextType = e.target.value;
-        const adminCount = list.filter(x => x.type==='admin' || x.isRoot===true).length;
-        if(u.type==='admin' && nextType!=='admin' && adminCount<=1){
-          alert(getTranslation(getUISettings().language, 'alertMustKeepOneAdmin')); e.target.value = 'admin'; return;
-        }
-        u.type = nextType; saveUsers(list); return;
-      }
-      const uid = e.target.getAttribute('data-uid');
-      if(uid){
-        const mod = e.target.getAttribute('data-mod');
-        const act = e.target.getAttribute('data-act');
-        const list = loadUsers(); const u = list.find(x=>x.username===uid); if(!u) return;
-        if(u.isRoot) return;
-        u.perms = u.perms || {}; u.perms[mod] = u.perms[mod] || {view:false,edit:false,delete:false};
-        u.perms[mod][act] = e.target.checked; saveUsers(list); return;
-      }
-    };
-    wrap.onclick = (e)=>{
-      const rm = e.target.getAttribute('data-remove');
-      if(rm){
-        if(rm===currentUser) return alert(getTranslation(getUISettings().language, 'alertCannotDeleteSelf'));
-        const list = loadUsers(); const u = list.find(x=>x.username===rm); if(u?.isRoot) return;
-        const next = list.filter(x=>x.username!==rm);
-        const adminCount = next.filter(x => x.type==='admin' || x.isRoot===true).length;
-        if(adminCount===0) return alert(getTranslation(getUISettings().language, 'alertMustKeepOneAdmin'));
-        saveUsers(next); renderUsersAdmin(); return;
-      }
-    };
-
-    const btn = document.getElementById('btnCreateUser');
-    if(btn){
-      btn.disabled = !canCreate;
-      btn.onclick = async ()=>{
-        if(!canCreate) return;
-        const uname = prompt('اسم المستخدم؟'); if(!uname) return;
-        const pass1 = prompt('كلمة المرور؟'); if(!pass1) return;
-        const list = loadUsers();
-        if(list.length>=5) return alert(getTranslation(getUISettings().language, 'alertMaxUsers'));
-        if(list.find(x=>x.username.toLowerCase()===uname.toLowerCase())) return alert(getTranslation(getUISettings().language, 'alertUsernameExists'));
-        const salt = genSalt(); const hash = await sha256(pass1 + salt);
-        const defaultPermsUser = Object.fromEntries(LilijaAuth.MODULES.map(m=>[m,{view:true,edit:false,delete:false}]));
-        list.push({ username:uname, salt, hash, type:'user', perms: defaultPermsUser });
-        saveUsers(list); renderUsersAdmin();
-      };
-    }
-  }
-
-  // ====== (replaced) ======
-  //(function(){
-  //  const body = document.body;
-  //  if(!body.__lilijaProductsBound){
-   //   body.__lilijaProductsBound = true;
-    //  body.addEventListener('click', (ev)=>{
-      //  const addBtn = ev.target.closest('#addProduct');
-        //if(addBtn){
-        //  try{
-         //   const pName = document.getElementById('pName');
-          //  const pSku  = document.getElementById('pSku');
-         //   const pCat  = document.getElementById('pCat');
-          //  const pPrice= document.getElementById('pPrice');
-           // const name = (pName?.value||'').trim();
-          //  if(!name) return alert('أدخل اسم المنتج');
-           // const _id = uid();
-            //db.products.push({ id:_id, name, sku:(pSku?.value||'').trim(), cat:(pCat?.value||'').trim(), price:Number(pPrice?.value)||0 });
-            //try{ recordAudit('add','products', _id, name, 0); }catch(e){}
-           // saveDB(db);
-           // if(pName) pName.value=''; if(pSku) pSku.value=''; if(pCat) pCat.value=''; if(pPrice) pPrice.value='';
-           // refreshAll();
-          //}catch(e){ console.warn('addProduct (delegate) failed', e); }
-         // return;
-       // }
-       // const delBtn = ev.target.closest('#productsTable [data-del]');
-        //if(delBtn){
-         // try{
-          //  const id = delBtn.getAttribute('data-del');
-           // if(!id) return;
-           // if(!softConfirm(delBtn)) return;
-           // const px = db.products.find(x=>x.id===id);
-            //try{ recordAudit('delete','products', id, px?px.name:''); }catch(e){}
-            //db.products = db.products.filter(x=>x.id!==id);
-           // saveDB(db); refreshAll();
-          //}catch(e){ console.warn('delete product (delegate) failed', e); }
-          //return;
-       // }
-     // }, true);
-    //}
-  //})();
-
-  // ====== Robust click bindings (products add/delete) v2 ======
-// عدّاد أرقام طلبات الشراء (PO)
-function ensureCounters(){
-  db.counters = db.counters || {};
-  if (typeof db.counters.nextPo !== 'number') db.counters.nextPo = 1001; // ابدأ من 1001 مثلاً
-}
-function nextPo(){
-  ensureCounters();
-  const n = db.counters.nextPo;
-  db.counters.nextPo++;
-  if (typeof saveDB === 'function') saveDB(db);
-  return n;
-}
-// ====== Auth & DB Keys ======
-  const USERS_KEY = 'miniStoreUsers_v1';
-  const SESSION_KEY = 'miniStoreSession_v1';
-  let currentUser = null;
-  let dbKeyBase = 'miniStoreDB_v3_orders';
-  let dbKey = dbKeyBase;
-
-  // ====== Crypto helpers ======
-  const enc = new TextEncoder();
-  async function sha256(text){ const buf = await crypto.subtle.digest('SHA-256', enc.encode(text)); return Array.from(new Uint8Array(buf)).map(b=>b.toString(16).padStart(2,'0')).join(''); }
-  function genSalt(){ return Math.random().toString(36).slice(2) + Math.random().toString(36).slice(2); }
-
-  function loadUsers(){ try{ return JSON.parse(localStorage.getItem(USERS_KEY)) || []; }catch{ return []; } }
-  function saveUsers(list){ localStorage.setItem(USERS_KEY, JSON.stringify(list)); }
-  function setSession(username){ sessionStorage.setItem(SESSION_KEY, JSON.stringify({username})); }
-  function getSession(){ try{ return JSON.parse(sessionStorage.getItem(SESSION_KEY)); }catch{ return null; } }
-  function clearSession(){ sessionStorage.removeItem(SESSION_KEY); }
-
-  // ====== Data Layer ======
-  const nowISO = () => new Date().toISOString().slice(0,10);
-  const uid = () => Math.random().toString(36).slice(2,9);
-  const deepClone = (o)=> JSON.parse(JSON.stringify(o));
-  const defaults = { products: [], purchases: [], sales: [], settings: { lowStockThreshold: 5, ui: { language: 'ar', theme: 'dark', accent: '#22d3ee', shopName: '', shopLogo: '' } }, audit: [] };
-  function loadDB(){ try{ return JSON.parse(localStorage.getItem(dbKey)) || deepClone(defaults);}catch{ return deepClone(defaults); } }
-  function saveDB(db){ localStorage.setItem(dbKey, JSON.stringify(db)); }
-  
-  let db = null;
-  
-  // ====== Light App namespace to reduce global pollution ======
-  window.App = {
-    db: null,
-    setDB: function(newDb) { 
-      this.db = newDb; 
-      window.db = newDb; // Keep legacy global for compatibility
-    },
-    getDB: function() { return this.db || window.db; },
-    getCurrentUser: () => window.getCurrentUser ? getCurrentUser() : null,
-    utils: window.LilijaUtils,
-    auth: window.LilijaAuth, 
-    data: window.LilijaData
-  };
-  
-  window.db = db;
-
-  // ====== i18n Support (comprehensive) ======
-  const i18n = {
-    ar: {
-      // Document title
-      appTitle: 'ليليجة — إدارة المتجر (v1.1.0)',
-      
-      // Header
-      modulesLoaded: 'وحدات محمّلة: سجل/مستخدمون',
-      currentUser: 'المستخدم:',
-      btnLogout: '🚪 تسجيل خروج',
-      btnBackup: '⬇️ تنزيل نسخة احتياطية',
-      btnRestore: '⬆️ استعادة',
-      btnReset: '♻️ إعادة ضبط',
-      
-      // Auth
-      authTitleLogin: 'تسجيل الدخول',
-      authTitleRegister: 'إنشاء حساب مدير',
-      usernameLabel: 'اسم المستخدم',
-      passwordLabel: 'كلمة المرور',
-      confirmPasswordLabel: 'تأكيد كلمة المرور',
-      btnLogin: 'دخول',
-      btnRegister: 'إنشاء',
-      usernamePlaceholder: 'مثال: admin',
-      authHint: 'تُحفظ بيانات الحساب مُشفّرة محليًا على هذا المتصفح فقط.',
-      loginHint: 'إذا لم تنشئ حسابًا بعد، ستظهر لك شاشة إنشاء حساب تلقائيًا.',
-      
-      // Tab labels
-      products: '📦 المنتجات',
-      purchases: '⬅️ المشتريات', 
-      sales: '➡️ المبيعات (طلبات)',
-      dashboard: '📊 لوحة العرض',
-      reports: '📈 التقارير',
-      settings: '⚙️ الإعدادات',
-      audit: '📝 سجل الحركات',
-      general: '⚙️ الإعدادات العامة',
-      
-      // Products section
-      productsTitle: 'المنتجات',
-      productNameLabel: 'اسم المنتج',
-      productNamePlaceholder: 'مثل: تمر خلاص 500غ',
-      skuLabel: 'الباركود / SKU',
-      skuPlaceholder: 'اختياري',
-      categoryLabel: 'الفئة',
-      categoryPlaceholder: 'مثل: تمور',
-      priceLabel: 'سعر البيع الافتراضي (AED)',
-      pricePlaceholder: 'مثال: 15.00',
-      btnAddProduct: '➕ إضافة منتج',
-      productsHint: 'يتم استخدام قائمة المنتجات في جميع الشاشات الأخرى تلقائيًا.',
-      productsTableTitle: 'جدول المنتجات',
-      btnExport: '⬇️ تصدير (Excel)',
-      thProduct: 'المنتج',
-      thSKU: 'SKU',
-      thCategory: 'الفئة',
-      thPrice: 'سعر البيع',
-      thStock: 'المخزون',
-      
-      // Purchases section
-      purchasesTitle: 'المشتريات (وارد للمخزون)',
-      selectProduct: 'المنتج',
-      quantityLabel: 'الكمية',
-      costLabel: 'سعر التكلفة للوحدة (AED)',
-      dateLabel: 'التاريخ',
-      btnAddPurchase: '➕ إضافة عملية شراء',
-      purchasesTableTitle: 'جدول المشتريات',
-      thDate: 'التاريخ',
-      thQuantity: 'الكمية',
-      thUnitCost: 'تكلفة الوحدة',
-      thTotal: 'الإجمالي',
-      thSupplier: 'اسم المورد',
-      thSupplierPhone: 'رقم المورد',
-      thPO: 'PO#',
-      
-      // Sales section
-      salesTitle: 'المبيعات (طلب متعدد الأصناف)',
-      selectProductSell: 'اختر المنتج',
-      sellQuantityLabel: 'الكمية',
-      sellPriceLabel: 'سعر الوحدة (من صفحة المنتجات، قابل للتعديل)',
-      discountTypeLabel: 'نوع الخصم على المنتج',
-      discountNone: 'بدون خصم',
-      discountAmount: 'خصم مبلغ',
-      discountPercent: 'خصم نسبة %',
-      discountValueLabel: 'قيمة الخصم',
-      deliveryFeeLabel: 'رسوم التوصيل (اختياري)',
-      customerNameLabel: 'اسم العميل (اختياري)',
-      customerNamePlaceholder: 'اكتب اسم العميل',
-      customerPhoneLabel: 'رقم الهاتف (اختياري)',
-      customerPhonePlaceholder: 'اكتب رقم الهاتف',
-      btnAddLine: '➕ إضافة للطلب',
-      orderDateLabel: 'تاريخ الطلب',
-      btnSaveOrder: '💾 حفظ الطلب',
-      cartTitle: 'سلة الطلب',
-      thDiscount: 'خصم',
-      orderTotalLabel: 'إجمالي الطلب',
-      previousOrdersTitle: 'الطلبات السابقة',
-      thItems: 'عدد الأصناف',
-      thOrderTotal: 'إجمالي الطلب',
-      thCustomerName: 'اسم العميل',
-      thCustomerPhone: 'رقم الهاتف',
-      thOptions: 'خيارات',
-      
-      // Dashboard section
-      dashboardTitle: 'لوحة العرض',
-      reportPeriodLabel: 'فترة التقرير',
-      btnToday: 'اليوم',
-      btnWeek: 'هذا الأسبوع',
-      btnMonth: 'هذا الشهر',
-      btnCustom: 'فترة مخصصة',
-      fromDateLabel: 'من تاريخ',
-      toDateLabel: 'إلى تاريخ',
-      
-      // General settings
-      generalSettingsTitle: '⚙️ الإعدادات العامة',
-      languageLabel: '🌐 اللغة',
-      themeLabel: '🎨 نمط العرض',
-      accentLabel: '🎯 اللون المميز',
-      shopNameLabel: '🏪 اسم المتجر',
-      shopLogoLabel: '🖼️ شعار المتجر',
-      accentHint: 'انقر على أحد الألوان أو اختر لون مخصص',
-      shopNameHint: 'سيظهر في رأس الصفحة',
-      shopNamePlaceholder: 'اسم متجرك',
-      shopLogoHint: 'اختر صورة لشعار متجرك (PNG, JPG)',
-      removeLogoHint: '🗑️ إزالة الشعار',
-      logoPreviewAlt: 'معاينة الشعار',
-      themeDark: 'ليلي (داكن)',
-      themeLight: 'نهاري (فاتح)',
-      
-      // Color swatches titles
-      colorCyan: 'سماوي',
-      colorNeonGreen: 'أخضر نيون',
-      colorNeonPurple: 'بنفسجي نيون',
-      colorNeonBlue: 'أزرق نيون',
-      colorNeonOrange: 'برتقالي نيون',
-      colorPurple: 'بنفسجي',
-      
-      // Audit Log section
-      auditTitle: 'سجل الحركات',
-      auditHint: 'يسجّل جميع الإضافات/التعديلات/الحذف مع اسم المستخدم والوقت.',
-      auditSearchPlaceholder: 'ابحث بالاسم/النوع/المستخدم...',
-      btnAuditExport: '⬇️ تصدير CSV',
-      btnAuditClear: '🗑️ مسح السجل',
-      thTime: 'الوقت',
-      thUser: 'المستخدم',
-      thModule: 'الوحدة',
-      thAction: 'الإجراء',
-      thRefId: 'المعرّف',
-      thDetails: 'الاسم/التفاصيل',
-      
-      // Users Admin section
-      usersTitle: 'المستخدمون والصلاحيات',
-      usersHintRoot: 'الأدمن الرئيسي فقط يمكنه إنشاء المستخدمين.',
-      usersHintView: 'عرض فقط',
-      btnCreateUser: '➕ إنشاء مستخدم جديد',
-      thUsername: 'المستخدم',
-      thType: 'النوع',
-      thProducts: 'المنتجات',
-      thSales: 'المبيعات',
-      thPurchases: 'المشتريات',
-      thUsers: 'المستخدمون',
-      thSettings: 'الإعدادات',
-      thAudit: 'سجل الحركات',
-      btnDelete: 'حذف',
-      rootAdminLabel: 'أدمن رئيسي',
-      
-      // Additional common action buttons
-      btnEdit: 'تعديل',
-      btnView: 'عرض',
-      btnInvoice: 'فاتورة',
-      
-      // Purchases section - missing keys
-      supplierNamePlaceholder: 'اسم المورد (اختياري)',
-      supplierPhonePlaceholder: 'رقم المورد (اختياري)',
-      purchaseDraftTitle: 'مسودة فاتورة المشتريات',
-      nextPOLabel: 'PO القادم:',
-      btnSaveInvoice: '💾 حفظ الفاتورة',
-      btnPrintDraft: '🖨️ طباعة المسودة',
-      btnClearDraft: 'مسح المسودة',
-      confirmClearDraft: 'مسح المسودة؟',
-      printDraftTitle: 'مسودة فاتورة مشتريات',
-      supplierLabel: 'المورّد',
-      phoneLabel: 'هاتف',
-      
-      // User management messages
-      usersHintRoot: 'الأدمن الرئيسي فقط يمكنه إنشاء المستخدمين.',
-      usersHintView: 'عرض فقط',
-      btnCreateUser: '➕ إنشاء مستخدم جديد',
-      permView: 'رؤية',
-      permEdit: 'تعديل',
-      permDelete: 'حذف',
-      promptUsername: 'اسم المستخدم؟',
-      promptPassword: 'كلمة المرور؟',
-      alertMaxUsers: 'بلغت الحد الأقصى 5 مستخدمين',
-      alertUsernameExists: 'الاسم موجود',
-      alertCannotDeleteSelf: 'لا يمكن حذف الحساب الحالي',
-      alertMustKeepOneAdmin: 'يجب أن يبقى حساب أدمن واحد على الأقل',
-      
-      // Delete confirmation
-      deleteConfirmTitle: 'حذف «{name}» من {module}؟',
-      deleteReasonPrompt: 'سبب الحذف (اختياري):',
-      alertNoDeletePermission: 'غير مسموح بالحذف لهذه الوحدة',
-      
-      // Generic strings for fallbacks
-      genericItem: 'العنصر',
-      tableNotFound: 'الجدول غير موجود',
-      accountNotFound: 'حساب غير موجود',
-      wrongCurrentPassword: 'كلمة المرور الحالية غير صحيحة',
-      passwordChanged: 'تم تغيير كلمة المرور',
-      passwordMismatch: 'تحقق من كلمة المرور الجديدة والتأكيد',
-      
-      // Success messages
-      orderSaved: 'تم حفظ الطلب',
-      settingsSaved: 'تم الحفظ',
-      backupRestored: 'تمت الاستعادة بنجاح',
-      systemReset: 'تمت إعادة الضبط',
-      accountCreated: 'تم إنشاء الحساب. يمكنك تسجيل الدخول الآن.',
-      
-      // Error messages
-      invalidFile: 'ملف غير صالح',
-      invalidCredentials: 'بيانات الاعتماد غير صحيحة',
-      enterUsernamePassword: 'أدخل اسم مستخدم وكلمة مرور',
-      passwordConfirmMismatch: 'تأكيد كلمة المرور غير مطابق',
-      
-      // Product validation errors
-      enterProductName: 'أدخل اسم المنتج',
-      productNameExists: 'اسم المنتج موجود مسبقًا',
-      skuExists: 'الباركود/‏SKU مستخدم مسبقًا',
-      usernameAlreadyExists: 'اسم المستخدم موجود مسبقًا',
-      
-      // Audit log section - all labels
-      auditSearchPlaceholder: 'ابحث بالاسم/النوع/المستخدم...',
-      btnAuditExport: '⬇️ تصدير CSV',
-      btnAuditClear: '🗑️ مسح السجل',
-      auditClearConfirm: 'مسح كامل السجل؟',
-      auditNoPermission: 'غير مسموح',
-      thTime: 'الوقت',
-      thUser: 'المستخدم',
-      thModule: 'الوحدة',
-      thAction: 'الإجراء',
-      thRefId: 'المعرّف',
-      thDetails: 'الاسم/التفاصيل',
-      thQty: 'الكمية',
-      
-      // Additional table headers for purchases draft
-      thUnitCostDraft: 'تكلفة الوحدة',
-      
-      // Users table headers
-      thUsername: 'المستخدم',
-      thType: 'النوع',
-      
-      // Password section
-      passwordSectionTitle: 'كلمة المرور',
-      currentPasswordLabel: 'كلمة المرور الحالية',
-      newPasswordLabel: 'كلمة المرور الجديدة',
-      confirmNewPasswordLabel: 'تأكيد كلمة المرور الجديدة',
-      btnChangePassword: '🔐 تغيير كلمة المرور',
-      passwordHint: 'تُخزن كلمة المرور بشكل مُشفّر محليًا في متصفحك.',
-      
-      // Confirm dialogs
-      confirmLabel: 'تأكيد؟',
-      purchaseSavedPrintPrompt: 'تم الحفظ. هل تريد طباعة الفاتورة الآن؟',
-      
-      // KPI labels
-      kpiInventoryValue: 'قيمة المخزون',
-      kpiSalesRevenue: 'إيرادات المبيعات',
-      kpiDeliveryRevenue: 'إيرادات التوصيل',
-      kpiCOGS: 'تكلفة البضاعة المباعة',
-      kpiProfit: 'الربح الإجمالي (تقديري)',
-      
-      // Settings section
-      settingsTitle: 'إعدادات',
-      lowStockThresholdLabel: 'حد التنبيه لانخفاض المخزون (لكل منتج)',
-      saveSettingsBtn: '💾 حفظ الإعدادات',
-      lowStockHint: 'يظهر تنبيه "منخفض" عندما يقل رصيد المنتج عن هذا الحد.',
-      
-      // Color names for swatches
-      colorCyan: 'سماوي',
-      colorNeonGreen: 'أخضر نيون',
-      colorNeonPurple: 'بنفسجي نيون',
-      colorNeonBlue: 'أزرق نيون',
-      colorNeonOrange: 'برتقالي نيون',
-      colorPurple: 'بنفسجي',
-      
-      // Reports section
-      reportsTitle: 'التقارير',
-      lowStockSectionTitle: 'أدنى مخزون',
-      topProductsSectionTitle: 'أفضل المنتجات مبيعًا',
-      exportExcelBtn: '⬇️ تصدير (Excel)',
-      thProduct: 'المنتج',
-      thAvailable: 'المتوفر',
-      thStatus: 'حالة',
-      thQuantitySold: 'الكمية المباعة',
-      thRevenue: 'الإيراد',
-      
-      // Additional error messages
-      emptyDraftAlert: 'المسودة فارغة',
-      productNameExists: 'اسم المنتج موجود مسبقًا',
-      skuExists: 'الباركود/‏SKU مستخدم مسبقًا',
-      
-      // User admin hints
-      usersHintRoot: 'الأدمن الرئيسي فقط يمكنه إنشاء المستخدمين.',
-      usersHintView: 'عرض فقط',
-      btnCreateUser: '➕ إنشاء مستخدم جديد',
-      permissionView: 'رؤية',
-      permissionEdit: 'تعديل',
-      permissionDelete: 'حذف',
-      
-      // Sales alerts
-      emptyCartAlert: 'السلة فارغة',
-      stockExceedsConfirm: 'هناك صنف كميته تتجاوز المخزون. متابعة؟',
-      orderNotFoundAlert: 'الطلب غير موجود'
-    },
-    en: {
-      // Document title
-      appTitle: 'Lilija — Store Manager (v1.1.0)',
-      
-      // Header
-      modulesLoaded: 'Modules loaded: log/users',
-      currentUser: 'User:',
-      btnLogout: '🚪 Logout',
-      btnBackup: '⬇️ Download Backup',
-      btnRestore: '⬆️ Restore',
-      btnReset: '♻️ Reset',
-      
-      // Auth
-      authTitleLogin: 'Login',
-      authTitleRegister: 'Create Admin Account',
-      usernameLabel: 'Username',
-      passwordLabel: 'Password',
-      confirmPasswordLabel: 'Confirm Password',
-      btnLogin: 'Login',
-      btnRegister: 'Create',
-      usernamePlaceholder: 'e.g: admin',
-      authHint: 'Account data is stored encrypted locally on this browser only.',
-      loginHint: 'If you haven\'t created an account yet, the create account screen will appear automatically.',
-      
-      // Tab labels  
-      products: '📦 Products',
-      purchases: '⬅️ Purchases',
-      sales: '➡️ Sales (Orders)', 
-      dashboard: '📊 Dashboard',
-      reports: '📈 Reports',
-      settings: '⚙️ Settings',
-      audit: '📝 Audit Log',
-      general: '⚙️ General Settings',
-      
-      // Products section
-      productsTitle: 'Products',
-      productNameLabel: 'Product Name',
-      productNamePlaceholder: 'e.g: Premium Dates 500g',
-      skuLabel: 'Barcode / SKU',
-      skuPlaceholder: 'Optional',
-      categoryLabel: 'Category',
-      categoryPlaceholder: 'e.g: Dates',
-      priceLabel: 'Default Selling Price (AED)',
-      pricePlaceholder: 'e.g: 15.00',
-      btnAddProduct: '➕ Add Product',
-      productsHint: 'The products list is used automatically in all other screens.',
-      productsTableTitle: 'Products Table',
-      btnExport: '⬇️ Export (Excel)',
-      thProduct: 'Product',
-      thSKU: 'SKU',
-      thCategory: 'Category',
-      thPrice: 'Selling Price',
-      thStock: 'Stock',
-      
-      // Purchases section
-      purchasesTitle: 'Purchases (Inventory Inbound)',
-      selectProduct: 'Product',
-      quantityLabel: 'Quantity',
-      costLabel: 'Cost Price per Unit (AED)',
-      dateLabel: 'Date',
-      btnAddPurchase: '➕ Add Purchase',
-      purchasesTableTitle: 'Purchases Table',
-      thDate: 'Date',
-      thQuantity: 'Quantity',
-      thUnitCost: 'Unit Cost',
-      thTotal: 'Total',
-      thSupplier: 'Supplier Name',
-      thSupplierPhone: 'Supplier Phone',
-      thPO: 'PO#',
-      
-      // Sales section
-      salesTitle: 'Sales (Multi-Item Order)',
-      selectProductSell: 'Select Product',
-      sellQuantityLabel: 'Quantity',
-      sellPriceLabel: 'Unit Price (from products page, editable)',
-      discountTypeLabel: 'Product Discount Type',
-      discountNone: 'No Discount',
-      discountAmount: 'Amount Discount',
-      discountPercent: 'Percentage Discount %',
-      discountValueLabel: 'Discount Value',
-      deliveryFeeLabel: 'Delivery Fee (Optional)',
-      customerNameLabel: 'Customer Name (Optional)',
-      customerNamePlaceholder: 'Enter customer name',
-      customerPhoneLabel: 'Phone Number (Optional)',
-      customerPhonePlaceholder: 'Enter phone number',
-      btnAddLine: '➕ Add to Order',
-      orderDateLabel: 'Order Date',
-      btnSaveOrder: '💾 Save Order',
-      cartTitle: 'Order Cart',
-      thDiscount: 'Discount',
-      orderTotalLabel: 'Order Total',
-      previousOrdersTitle: 'Previous Orders',
-      thItems: 'Items Count',
-      thOrderTotal: 'Order Total',
-      thCustomerName: 'Customer Name',
-      thCustomerPhone: 'Phone Number',
-      thOptions: 'Options',
-      
-      // Dashboard section
-      dashboardTitle: 'Dashboard',
-      reportPeriodLabel: 'Report Period',
-      btnToday: 'Today',
-      btnWeek: 'This Week',
-      btnMonth: 'This Month',
-      btnCustom: 'Custom Period',
-      fromDateLabel: 'From Date',
-      toDateLabel: 'To Date',
-      
-      // General settings
-      generalSettingsTitle: '⚙️ General Settings',
-      languageLabel: '🌐 Language',
-      themeLabel: '🎨 Theme Mode',
-      accentLabel: '🎯 Accent Color',
-      shopNameLabel: '🏪 Shop Name', 
-      shopLogoLabel: '🖼️ Shop Logo',
-      accentHint: 'Click on a color swatch or choose custom',
-      shopNameHint: 'Will appear in the header',
-      shopNamePlaceholder: 'Your shop name',
-      shopLogoHint: 'Choose an image for your shop logo (PNG, JPG)',
-      removeLogoHint: '🗑️ Remove Logo',
-      logoPreviewAlt: 'Logo Preview',
-      themeDark: 'Dark (Night)',
-      themeLight: 'Light (Day)',
-      
-      // Color swatches titles
-      colorCyan: 'Cyan',
-      colorNeonGreen: 'Neon Green',
-      colorNeonPurple: 'Neon Purple',
-      colorNeonBlue: 'Neon Blue',
-      colorNeonOrange: 'Neon Orange',
-      colorPurple: 'Purple',
-      
-      // Audit Log section
-      auditTitle: 'Audit Log',
-      auditHint: 'Records all additions/modifications/deletions with username and time.',
-      auditSearchPlaceholder: 'Search by name/type/user...',
-      btnAuditExport: '⬇️ Export CSV',
-      btnAuditClear: '🗑️ Clear Log',
-      thTime: 'Time',
-      thUser: 'User',
-      thModule: 'Module',
-      thAction: 'Action',
-      thRefId: 'Ref ID',
-      thDetails: 'Name/Details',
-      
-      // Users Admin section
-      usersTitle: 'Users and Permissions',
-      usersHintRoot: 'Only the root admin can create users.',
-      usersHintView: 'View only',
-      btnCreateUser: '➕ Create New User',
-      thUsername: 'Username',
-      thType: 'Type',
-      thProducts: 'Products',
-      thSales: 'Sales',
-      thPurchases: 'Purchases',
-      thUsers: 'Users',
-      thSettings: 'Settings',
-      thAudit: 'Audit Log',
-      btnDelete: 'Delete',
-      rootAdminLabel: 'Root Admin',
-      
-      // Additional common action buttons
-      btnEdit: 'Edit',
-      btnView: 'View',
-      btnInvoice: 'Invoice',
-      
-      // Purchases section - missing keys  
-      supplierNamePlaceholder: 'Supplier name (optional)',
-      supplierPhonePlaceholder: 'Supplier phone (optional)',
-      purchaseDraftTitle: 'Purchase Invoice Draft',
-      nextPOLabel: 'Next PO:',
-      btnSaveInvoice: '💾 Save Invoice',
-      btnPrintDraft: '🖨️ Print Draft',
-      btnClearDraft: 'Clear Draft',
-      confirmClearDraft: 'Clear draft?',
-      printDraftTitle: 'Purchase Invoice Draft',
-      supplierLabel: 'Supplier',
-      phoneLabel: 'Phone',
-      
-      // User management messages
-      usersHintRoot: 'Only the root admin can create users.',
-      usersHintView: 'View only',
-      btnCreateUser: '➕ Create New User',
-      permView: 'View',
-      permEdit: 'Edit',
-      permDelete: 'Delete',
-      promptUsername: 'Username?',
-      promptPassword: 'Password?',
-      alertMaxUsers: 'Maximum 5 users reached',
-      alertUsernameExists: 'Username already exists',
-      alertCannotDeleteSelf: 'Cannot delete current account',
-      alertMustKeepOneAdmin: 'Must keep at least one admin account',
-      
-      // Delete confirmation
-      deleteConfirmTitle: 'Delete «{name}» from {module}?',
-      deleteReasonPrompt: 'Reason for deletion (optional):',
-      alertNoDeletePermission: 'No permission to delete from this module',
-      
-      // Generic strings for fallbacks
-      genericItem: 'Item',
-      tableNotFound: 'Table not found',
-      accountNotFound: 'Account not found',
-      wrongCurrentPassword: 'Current password is incorrect',
-      passwordChanged: 'Password changed',
-      passwordMismatch: 'Please verify new password and confirmation match',
-      
-      // Success messages
-      orderSaved: 'Order saved',
-      settingsSaved: 'Settings saved',
-      backupRestored: 'Backup restored successfully',
-      systemReset: 'System reset completed',
-      accountCreated: 'Account created. You can now log in.',
-      
-      // Error messages
-      invalidFile: 'Invalid file',
-      invalidCredentials: 'Invalid credentials',
-      enterUsernamePassword: 'Enter username and password',
-      passwordConfirmMismatch: 'Password confirmation does not match',
-      
-      // Product validation errors
-      enterProductName: 'Enter product name',
-      productNameExists: 'Product name already exists',
-      skuExists: 'Barcode/SKU already in use',
-      usernameAlreadyExists: 'Username already exists',
-      
-      // Audit log section - all labels
-      auditSearchPlaceholder: 'Search by name/type/user...',
-      btnAuditExport: '⬇️ Export CSV',
-      btnAuditClear: '🗑️ Clear Log',
-      auditClearConfirm: 'Clear entire log?',
-      auditNoPermission: 'Not allowed',
-      thTime: 'Time',
-      thUser: 'User',
-      thModule: 'Module',
-      thAction: 'Action',
-      thRefId: 'Ref ID',
-      thDetails: 'Name/Details',
-      thQty: 'Quantity',
-      
-      // Additional table headers for purchases draft  
-      thUnitCostDraft: 'Unit Cost',
-      
-      // Users table headers
-      thUsername: 'Username', 
-      thType: 'Type',
-      
-      // Password section  
-      passwordSectionTitle: 'Password',
-      currentPasswordLabel: 'Current Password',
-      newPasswordLabel: 'New Password',
-      confirmNewPasswordLabel: 'Confirm New Password',
-      btnChangePassword: '🔐 Change Password',
-      passwordHint: 'Your password is stored encrypted locally in your browser.',
-      
-      // Confirm dialogs
-      confirmLabel: 'Confirm?',
-      purchaseSavedPrintPrompt: 'Saved. Do you want to print the invoice now?',
-      
-      // KPI labels
-      kpiInventoryValue: 'Inventory value',
-      kpiSalesRevenue: 'Sales revenue',
-      kpiDeliveryRevenue: 'Delivery revenue',
-      kpiCOGS: 'Cost of goods sold',
-      kpiProfit: 'Profit',
-      
-      // Settings section
-      settingsTitle: 'Settings',
-      lowStockThresholdLabel: 'Low stock alert threshold (per product)',
-      saveSettingsBtn: '💾 Save Settings',
-      lowStockHint: 'Shows "low" alert when product stock falls below this threshold.',
-      
-      // Color names for swatches
-      colorCyan: 'Cyan',
-      colorNeonGreen: 'Neon Green',
-      colorNeonPurple: 'Neon Purple',
-      colorNeonBlue: 'Neon Blue',
-      colorNeonOrange: 'Neon Orange',
-      colorPurple: 'Purple',
-      
-      // Reports section
-      reportsTitle: 'Reports',
-      lowStockSectionTitle: 'Low Stock',
-      topProductsSectionTitle: 'Top Selling Products',
-      exportExcelBtn: '⬇️ Export (Excel)',
-      thProduct: 'Product',
-      thAvailable: 'Available',
-      thStatus: 'Status',
-      thQuantitySold: 'Quantity Sold',
-      thRevenue: 'Revenue',
-      
-      // Additional error messages
-      emptyDraftAlert: 'Draft is empty',
-      productNameExists: 'Product name already exists',
-      skuExists: 'Barcode/SKU already in use',
-      
-      // User admin hints
-      usersHintRoot: 'Only the root admin can create users.',
-      usersHintView: 'View only',
-      btnCreateUser: '➕ Create New User',
-      permissionView: 'View',
-      permissionEdit: 'Edit',
-      permissionDelete: 'Delete',
-      
-      // Sales alerts
-      emptyCartAlert: 'Cart is empty',
-      stockExceedsConfirm: 'There is an item whose quantity exceeds inventory. Continue?',
-      orderNotFoundAlert: 'Order not found'
-    }
-  };
-
-  // ====== i18n Helper Functions ======
-  
-  // Get translation for a key, with fallback to English
-  function getTranslation(lang, key) {
-    if (i18n[lang] && i18n[lang][key]) {
-      return i18n[lang][key];
-    }
-    // Fallback to English
-    if (i18n.en && i18n.en[key]) {
-      return i18n.en[key];
-    }
-    // If key doesn't exist in either language, return the key itself
-    return key;
-  }
-
-  // Update a single element with translation
-  function translateElement(element, lang) {
-    if (!element) return;
-    
-    // Handle data-i18n attribute (for textContent)
-    const i18nKey = element.getAttribute('data-i18n');
-    if (i18nKey) {
-      element.textContent = getTranslation(lang, i18nKey);
-    }
-    
-    // Handle data-i18n-placeholder attribute
-    const placeholderKey = element.getAttribute('data-i18n-placeholder');
-    if (placeholderKey) {
-      element.placeholder = getTranslation(lang, placeholderKey);
-    }
-    
-    // Handle data-i18n-title attribute
-    const titleKey = element.getAttribute('data-i18n-title');
-    if (titleKey) {
-      element.title = getTranslation(lang, titleKey);
-    }
-    
-    // Handle data-i18n-aria attribute
-    const ariaKey = element.getAttribute('data-i18n-aria');
-    if (ariaKey) {
-      element.setAttribute('aria-label', getTranslation(lang, ariaKey));
-    }
-    
-    // Handle data-i18n-alt attribute for images
-    const altKey = element.getAttribute('data-i18n-alt');
-    if (altKey) {
-      element.alt = getTranslation(lang, altKey);
-    }
-  }
-
-  // Apply translations to entire page
-  function applyTranslations(lang) {
-    // Save language preference to localStorage
-    localStorage.setItem('pos.lang', lang);
-    
-    // Update document title
-    document.title = getTranslation(lang, 'appTitle');
-    
-    // Update document language and direction
-    document.documentElement.lang = lang;
-    document.documentElement.dir = lang === 'ar' ? 'rtl' : 'ltr';
-    
-    // Find and translate all elements with data-i18n* attributes
-    const elementsWithI18n = document.querySelectorAll('[data-i18n], [data-i18n-placeholder], [data-i18n-title], [data-i18n-aria], [data-i18n-alt]');
-    elementsWithI18n.forEach(element => translateElement(element, lang));
-    
-    // Handle special cases: dropdown options that can't use data-i18n reliably
-    const themeOptions = document.querySelectorAll('#uiTheme option');
-    if (themeOptions.length >= 2) {
-      themeOptions[0].textContent = getTranslation(lang, 'themeDark'); // Dark theme
-      themeOptions[1].textContent = getTranslation(lang, 'themeLight'); // Light theme
-    }
-    
-    const discountOptions = document.querySelectorAll('#lineDiscType option');
-    if (discountOptions.length >= 3) {
-      discountOptions[0].textContent = getTranslation(lang, 'discountNone');
-      discountOptions[1].textContent = getTranslation(lang, 'discountAmount');
-      discountOptions[2].textContent = getTranslation(lang, 'discountPercent');
-    }
-    
-    // Update the existing tab rendering and general settings
-    renderTabs();
-    updateGeneralSettingsLabels();
-    
-    // Refresh dynamic content that uses translations
-    try { 
-      refreshAll(); // Refresh all dynamic content like tables
-      if (typeof renderUsersAdmin === 'function') renderUsersAdmin(); // Refresh users admin
-      if (typeof renderAudit === 'function') renderAudit(); // Refresh audit log
-    } catch (e) {
-      console.warn('Error refreshing dynamic content:', e);
-    }
-  }
-
-  // Initialize language from localStorage or default to Arabic
-  function initializeLanguage() {
-    const savedLang = localStorage.getItem('pos.lang') || 'ar';
-    applyTranslations(savedLang);
-    
-    // Set the language dropdown if it exists
-    const langDropdown = document.getElementById('uiLanguage');
-    if (langDropdown) {
-      langDropdown.value = savedLang;
-    }
-  }
-
-  // ====== Helpers ======
-  // Note: productMap, sum, calcStats moved to modules/utils.js and modules/data.js
-
-  // ====== UI Tabs ======
-  const tabsCfg = [
-    {id:'products', label:'📦 المنتجات'},
-    {id:'purchases', label:'⬅️ المشتريات'},
-    {id:'sales', label:'➡️ المبيعات (طلبات)'},
-    {id:'dashboard', label:'📊 لوحة العرض'},
-    {id:'reports', label:'📈 التقارير'},
-    {id:'general', label:'⚙️ الإعدادات العامة'},
-    {id:'settings', label:'⚙️ الإعدادات'},
-    {id:'audit', label:'📝 سجل الحركات'},
-  ];
-  
-  // Note: Auth & permissions moved to modules/auth.js
-
-  // ====== UI Settings Functions ======
-  function getUISettings() {
-    if (!db || !db.settings) return { language: 'ar', theme: 'dark', accent: '#22d3ee', shopName: '', shopLogo: '' };
-    if (!db.settings.ui) {
-      db.settings.ui = { language: 'ar', theme: 'dark', accent: '#22d3ee', shopName: '', shopLogo: '' };
-    }
-    return db.settings.ui;
-  }
-
-  function saveUISettings(settings) {
-    if (!db.settings.ui) db.settings.ui = {};
-    Object.assign(db.settings.ui, settings);
-    saveDB(db);
-  }
-
-  function applyUISettings() {
-    const ui = getUISettings();
-    
-    // Apply language and direction
-    document.documentElement.lang = ui.language;
-    document.documentElement.dir = ui.language === 'ar' ? 'rtl' : 'ltr';
-    
-    // Apply theme
-    document.documentElement.setAttribute('data-theme', ui.theme);
-    
-    // Apply accent color
-    document.documentElement.style.setProperty('--accent-color', ui.accent);
-    document.documentElement.style.setProperty('--accent', ui.accent);
-    
-    // Apply comprehensive translations
-    applyTranslations(ui.language);
-    
-    // Update header logo and name
-    const shopLogoImg = document.getElementById('shopLogoImg');
-    const logoLilija = document.getElementById('logoLilija');
-    const shopNameSpan = document.getElementById('shopNameSpan');
-    
-    if (ui.shopLogo) {
-      shopLogoImg.src = ui.shopLogo;
-      shopLogoImg.style.display = 'inline';
-      logoLilija.style.display = 'none';
-    } else {
-      shopLogoImg.style.display = 'none';
-      logoLilija.style.display = 'inline';
-    }
-    
-    if (ui.shopName) {
-      shopNameSpan.textContent = ui.shopName;
-    } else {
-      shopNameSpan.textContent = getTranslation(ui.language, 'appTitle');
-    }
-    
-    // Update user status text
-    const whoami = document.getElementById('whoami');
-    const currentUserName = currentUser || '';
-    if (whoami && currentUserName) {
-      whoami.textContent = getTranslation(ui.language, 'currentUser') + ' ' + currentUserName;
-    }
-    
-    // Update tab labels
-    renderTabs();
-    
-    // Update general settings labels
-    updateGeneralSettingsLabels();
-  }
-
-  function renderTabs() {
-    const ui = getUISettings();
-    const lang = ui.language;
-    const tabsEl = document.getElementById('tabs');
-    if (!tabsEl) return;
-    
-    // Clear existing tabs
-    tabsEl.innerHTML = '';
-    
-    // Recreate tabs with current language labels
-    tabsCfg.forEach(t => {
-      const b = document.createElement('button');
-      b.className = 'tab';
-      b.textContent = i18n[lang][t.id] || t.label;
-      b.dataset.tab = t.id;
-      tabsEl.appendChild(b);
-    });
-  }
-
-  function updateGeneralSettingsLabels() {
-    const ui = getUISettings();
-    const lang = ui.language;
-    
-    // Update general settings labels
-    const elements = {
-      generalSettingsTitle: document.getElementById('generalSettingsTitle'),
-      languageLabel: document.getElementById('languageLabel'),
-      themeLabel: document.getElementById('themeLabel'),
-      accentLabel: document.getElementById('accentLabel'),
-      shopNameLabel: document.getElementById('shopNameLabel'),
-      shopLogoLabel: document.getElementById('shopLogoLabel'),
-      accentHint: document.getElementById('accentHint'),
-      shopNameHint: document.getElementById('shopNameHint'),
-      shopLogoHint: document.getElementById('shopLogoHint'),
-      removeLogoHint: document.getElementById('removeLogoBtn')
-    };
-    
-    Object.keys(elements).forEach(key => {
-      if (elements[key] && i18n[lang][key]) {
-        if (key === 'removeLogoHint') {
-          elements[key].textContent = i18n[lang][key];
-        } else {
-          elements[key].textContent = i18n[lang][key];
-        }
-      }
-    });
-  }
-
-  function renderGeneralSettings() {
-    const ui = getUISettings();
-    
-    // Set current values
-    document.getElementById('uiLanguage').value = ui.language;
-    document.getElementById('uiTheme').value = ui.theme;
-    document.getElementById('uiAccent').value = ui.accent;
-    document.getElementById('shopName').value = ui.shopName || '';
-    
-    // Update logo preview
-    const preview = document.getElementById('shopLogoPreview');
-    const removeBtn = document.getElementById('removeLogoBtn');
-    
-    if (ui.shopLogo) {
-      preview.src = ui.shopLogo;
-      preview.style.display = 'block';
-      removeBtn.style.display = 'inline-block';
-    } else {
-      preview.style.display = 'none';
-      removeBtn.style.display = 'none';
-    }
-    
-    // Update accent color swatch selection
-    updateAccentSwatches();
-    
-    // Update labels
-    updateGeneralSettingsLabels();
-  }
-
-  function updateAccentSwatches() {
-    const ui = getUISettings();
-    const swatches = document.querySelectorAll('.color-swatch');
-    swatches.forEach(swatch => {
-      swatch.classList.toggle('selected', swatch.dataset.color === ui.accent);
-    });
-  }
-
-  const tabsEl = document.getElementById('tabs');
-  // Initial tab rendering (will be updated by applyUISettings)
-  tabsCfg.forEach(t=>{ const b = document.createElement('button'); b.className='tab'; b.textContent=t.label; b.dataset.tab=t.id; if(tabsEl) tabsEl.appendChild(b); });
-  
-  function activateTab(id){
-    document.querySelectorAll('.tab').forEach(b=>b.classList.toggle('active', b.dataset.tab===id));
-    document.querySelectorAll('section.panel').forEach(s=>{ 
-      s.hidden = s.dataset.tab!==id; 
-      if(id==='settings' && typeof renderUsersAdmin==='function') renderUsersAdmin(); 
-      if(id==='general') renderGeneralSettings();
-      if(id==='audit' && typeof renderAudit==='function') renderAudit();
-      if(id==='dashboard' && typeof renderDashboard==='function') renderDashboard();
-    });
-    localStorage.setItem(dbKey+':tab', id);
-    refreshAll();
-  }
-  tabsEl.addEventListener('click', (e)=>{ if(e.target.classList.contains('tab')) activateTab(e.target.dataset.tab); });
-  function getLastTab(){ return localStorage.getItem(dbKey+':tab') || 'products'; }
-
-  // ====== Products ======
-  
-  // Product duplicate validation helpers
-  function isDuplicateProductName(name, exceptId) {
-    const n = (name || '').trim().toLowerCase();
-    if (!n) return false;
-    try {
-      return Array.isArray(window.db?.products) && window.db.products.some(p =>
-        (p?.name || '').trim().toLowerCase() === n && p.id !== exceptId
-      );
-    } catch (e) { return false; }
-  }
-
-  function isDuplicateSKU(sku, exceptId) {
-    const s = (sku || '').trim().toLowerCase();
-    if (!s) return false; // empty SKU allowed
-    try {
-      return Array.isArray(window.db?.products) && window.db.products.some(p =>
-        (p?.sku || '').trim().toLowerCase() === s && p.id !== exceptId
-      );
-    } catch (e) { return false; }
-  }
-
-  // Guard against double-definition
-  if (typeof window.isDuplicateProductName !== 'function') window.isDuplicateProductName = isDuplicateProductName;
-  if (typeof window.isDuplicateSKU !== 'function') window.isDuplicateSKU = isDuplicateSKU;
-
-  const pName = document.getElementById('pName');
-  const pSku = document.getElementById('pSku');
-  const pCat = document.getElementById('pCat');
-  const pPrice = document.getElementById('pPrice');
-  document.getElementById('addProduct').onclick = () => {
-  // قراءات وحسابات أولية
-  const nameRaw = pName.value || '';
-  const skuRaw  = pSku.value || '';
-  const catRaw  = pCat.value || '';
-  const priceRaw = Number(pPrice.value) || 0;
-
-  const name = nameRaw.trim();
-  const sku  = skuRaw.trim();
-  const cat  = catRaw.trim();
-
-  if (!name) { alert(getTranslation(getUISettings().language, 'enterProductName')); pName.focus(); return; }
-
-  // Check for duplicates using shared utilities
-  if (isDuplicateProductName(name)) {
-    alert(getTranslation(getUISettings().language, 'productNameExists'));
-    pName.focus();
-    return;
-  }
-
-  if (isDuplicateSKU(sku)) {
-    alert(getTranslation(getUISettings().language, 'skuExists'));
-    pSku.focus();
-    return;
-  }
-
-  // الإضافة
-  const _id = uid();
-  db.products.push({ id:_id, name, sku, cat, price: priceRaw });
-  try { recordAudit && recordAudit('add','products', _id, name, 0); } catch(_) {}
-  saveDB(db);
-
-  // تفريغ الحقول
-  pName.value = pSku.value = pCat.value = '';
-  pPrice.value = '';
-
-  refreshAll();
-};
-
- function renderProducts() {
-  const tbody = document.querySelector('#productsTable tbody');
-  if (!tbody) return;
-
-  // تعبئة الجدول
-  tbody.innerHTML = '';
-  const stats = calcStats();
-  const mapStat = new Map(stats.map(s => [s.id, s]));
-
-  for (const p of db.products) {
-    const s = mapStat.get(p.id) || { stock: 0 };
-    const tr = document.createElement('tr');
-    tr.innerHTML = `
-      <td>${p.name}</td>
-      <td>${p.sku || ''}</td>
-      <td>${p.cat || ''}</td>
-      <td>${(p.price || 0).toFixed(2)}</td>
-      <td>${s.stock || 0}</td>
-      <td class="flex">
-        <button data-edit="${p.id}" type="button">${getTranslation(getUISettings().language, 'btnEdit')}</button>
-        <button data-del="${p.id}" class="btn-danger" type="button">${getTranslation(getUISettings().language, 'btnDelete')}</button>
-      </td>`;
-    tbody.appendChild(tr);
-  }
-
-  // أحداث النقر (تعديل/حذف)
-  tbody.onclick = async (e) => {
-    const btnEdit = e.target.closest('button[data-edit]');
-    const btnDel  = e.target.closest('button[data-del]');
-    if (!btnEdit && !btnDel) return;
-
-    // تعديل المنتج
-    if (btnEdit) {
-      const id = btnEdit.dataset.edit;
-      const p = db.products.find(x => x.id === id);
-      if (!p) return;
-
-      const name  = prompt('اسم المنتج', p.name);    if (name  === null) return;
-      const sku   = prompt('SKU',        p.sku || ''); if (sku   === null) return;
-      const cat   = prompt('الفئة',      p.cat || ''); if (cat   === null) return;
-      const price = parseFloat(prompt('سعر البيع', p.price || 0));
-      if (Number.isNaN(price)) return;
-
-      // Check for duplicates using shared utilities (excluding current product)
-      if (isDuplicateProductName(name, p.id)) {
-        alert(getTranslation(getUISettings().language, 'productNameExists'));
-        return;
-      }
-
-      if (isDuplicateSKU(sku, p.id)) {
-        alert(getTranslation(getUISettings().language, 'skuExists'));
-        return;
-      }
-
-Object.assign(p, { name, sku, cat, price });
-try { recordAudit && recordAudit('edit','products', p.id, `name=${name},sku=${sku},price=${price}`); } catch(_){}
-saveDB(db); 
-refreshAll();
-      return;
-    }
-
-    // حذف المنتج (مع التأكيد الموحّد)
-    if (btnDel) {
-      const idDel = btnDel.dataset.del;
-      const px = db.products.find(x => x.id === idDel);
-      const res = await confirmDeleteUniversal('products', idDel, px ? px.name : '');
-      if (!res.ok) return;
-
-      db.products = db.products.filter(x => x.id !== idDel);
-      saveDB(db);
-      refreshAll();
-      return;
-    }
-  };
-}
-
-
-  // ====== Purchases ======
-  const buyProduct = document.getElementById('buyProduct');
-  const buyQty = document.getElementById('buyQty');
-  const buyCost = document.getElementById('buyCost');
-  const buyDate = document.getElementById('buyDate'); if(buyDate) buyDate.value = nowISO();
-//  document.getElementById('addPurchase').onclick = ()=>{
-//    const pid = buyProduct.value; if(!pid) return alert('اختر المنتج');
-//    const qty = Number(buyQty.value); const cost = Number(buyCost.value);
-//    if(!(qty>0 && cost>=0)) return alert('أدخل كمية وتكلفة صحيحة');
-//    const _pid=uid(); db.purchases.push({ id:_pid, productId:pid, qty, unitCost:cost, date: buyDate.value || nowISO() });
-//    try{ const pn=(db.products.find(x=>x.id===pid)?.name)||''; recordAudit('add','purchases', _pid, pn, qty);}catch{}
-//    saveDB(db); buyQty.value=''; buyCost.value=''; refreshAll();
-//  };
-// عدّادات أرقام الشراء (ضع الدالتين global إن لم تكن موجودة)
-//function ensureCounters() {
-//  db.counters = db.counters || {};
-//  if (typeof db.counters.nextPo !== 'number') db.counters.nextPo = 1001; // بداية مناسبـة
-//}
-//function nextPo() {
-//  ensureCounters();
-//  const n = db.counters.nextPo;
-//  db.counters.nextPo++;
-//  if (typeof saveDB === 'function') saveDB(db);
-//  return n;/
-//}
-
-function renderPurchases() {
-  // تأكد من العناصر الأساسية
-  if (!buyProduct) return;
-
-  // 1) تحديث قائمة المنتجات
-  buyProduct.innerHTML =
-    '<option value="">— اختر منتج —</option>' +
-    db.products.map(p => `<option value="${p.id}">${p.name}</option>`).join('');
-
-  // 2) حقول المورّدين + بادج رقم الطلب: ننشئها مرّة واحدة بجانب حقول الشراء
-  // 2) حقول المورّدين + بادج رقم الطلب: داخل صندوق المسودة (poDraftBox)
-ensureCounters();
-const poBox = document.getElementById('poDraftBox');
-if (poBox && !document.getElementById('supName')) {
-  poBox.insertAdjacentHTML('afterbegin', `
-    <div id="supFields" class="flex" style="gap:8px;margin-bottom:8px;align-items:center">
-      <span id="poPreview" class="tag" title="رقم الطلب القادم">#${db.counters?.nextPo ?? 1001}</span>
-      <input id="supName" data-i18n-placeholder="supplierNamePlaceholder" placeholder="اسم المورد (اختياري)" />
-      <input id="supPhone" data-i18n-placeholder="supplierPhonePlaceholder" placeholder="رقم المورد (اختياري)" />
-    </div>
-  `);
-}
-// Update PO preview badge after supplier fields are added
-const poPreview = document.getElementById('poPreview');
-if (poPreview) poPreview.textContent = '#' + (db.counters?.nextPo ?? 1001);
-
-// إنشاء صندوق المسودة مرة واحدة
-const purchasesSection = document.querySelector('[data-tab="purchases"] .grid');
-if (purchasesSection && !document.getElementById('poDraftBox')){
-  purchasesSection.insertAdjacentHTML('beforeend', `
-    <div class="g12">
-      <div id="poDraftBox" class="panel" style="margin-top:10px">
-      <div class="flex">
-        <strong data-i18n="purchaseDraftTitle">مسودة فاتورة المشتريات</strong>
-        <span class="tag" style="margin-inline-start:auto"><span data-i18n="nextPOLabel">PO القادم:</span> <span id="poPreview2">#${db.counters?.nextPo ?? 1001}</span></span>
-      </div>
-      <div class="flex" style="gap:8px;margin:8px 0">
-        <button id="savePO" class="btn-primary" type="button" data-i18n="btnSaveInvoice">💾 حفظ الفاتورة</button>
-        <button id="printDraft" class="btn-muted" type="button" data-i18n="btnPrintDraft">🖨️ طباعة المسودة</button>
-        <button id="clearDraft" class="btn-danger" type="button" data-i18n="btnClearDraft">مسح المسودة</button>
-      </div>
-      <table id="poDraftTable">
-        <thead><tr><th data-i18n="thProduct">المنتج</th><th data-i18n="thQuantity">الكمية</th><th data-i18n="thUnitCostDraft">تكلفة الوحدة</th><th data-i18n="thTotal">الإجمالي</th><th></th></tr></thead>
-        <tbody></tbody>
-        <tfoot><tr><th colspan="3" style="text-align:left">الإجمالي</th><th id="poDraftTotal">0.00</th><th></th></tr></tfoot>
-      </table>
-      </div>
-    </div>
-  `);
-}
-const poPrev2 = document.getElementById('poPreview2');
-if (poPrev2) poPrev2.textContent = '#' + (db.counters?.nextPo ?? 1001);
-
-// أول عرض للمسودة في هذا التبويب
-renderPurchaseDraft();
-
-  // 3) جدول العرض
-  const tbody = document.querySelector('#purchasesTable tbody');
-  if (!tbody) return;
-  tbody.innerHTML = '';
-
-  const pmap = productMap();
-  for (const r of db.purchases) {
-    const tr = document.createElement('tr');
-    const total = (Number(r.qty) || 0) * (Number(r.unitCost) || 0);
-    tr.innerHTML = `
-      <td>${r.date || ''}</td>
-      <td>${pmap.get(r.productId)?.name || '—'}</td>
-      <td>${r.qty}</td>
-      <td>${(r.unitCost || 0).toFixed(2)}</td>
-      <td>${total.toFixed(2)}</td>
-      <td>${r.supplier || ''}</td>
-      <td>${r.supplierPhone || ''}</td>
-      <td>${r.po ? ('#' + r.po) : ''}</td>
-      <td><button data-del="${r.id}" class="btn-danger" type="button">${getTranslation(getUISettings().language, 'btnDelete')}</button></td>
-    `;
-    tbody.appendChild(tr);
-  }
-
-  // 4) زر إضافة الشراء: نربطه مرّة واحدة ونضيف supplier + po
-// إضافة الصنف إلى المسودة بدلاً من الحفظ الفوري
-const addBtn = document.getElementById('addPurchase');
-if (addBtn && !addBtn.__boundDraft){
-  addBtn.__boundDraft = true;
-  addBtn.onclick = () => {
-    const prodId = buyProduct.value;
-    const qty  = Number(buyQty?.value)||0;
-    const cost = Number(buyCost?.value)||0;
-    if(!prodId) return alert('اختر المنتج');
-    if(qty<=0)  return alert('أدخل الكمية');
-    if(cost<0)  return alert('أدخل تكلفة صحيحة');
-
-    purchaseDraft.push({ productId: prodId, qty, unitCost: cost });
-    // تفريغ الحقول الإدخالية
-    if(buyQty)  buyQty.value = '';
-    if(buyCost) buyCost.value = '';
-    if(buyProduct) buyProduct.value = '';
-    renderPurchaseDraft();
-  };
-}
-// Helper function to clear supplier fields
-function clearSupplierFields() {
-  const supNameEl = document.getElementById('supName');
-  const supPhoneEl = document.getElementById('supPhone');
-  if (supNameEl) supNameEl.value = '';
-  if (supPhoneEl) supPhoneEl.value = '';
-}
-
-// حفظ الفاتورة (إنشاء PO واحد وتفريغ المسودة)
-const btnSavePO = document.getElementById('savePO');
-if (btnSavePO && !btnSavePO.__bound){
-  btnSavePO.__bound = true;
-  btnSavePO.onclick = ()=>{
-    if(purchaseDraft.length===0) return alert(getTranslation(getUISettings().language, 'emptyDraftAlert'));
-
-    const supplier      = (document.getElementById('supName')?.value||'').trim();
-    const supplierPhone = (document.getElementById('supPhone')?.value||'').trim();
-    const dateStr = (document.getElementById('buyDate')?.value) || (new Date().toISOString().slice(0,10));
-    const po = nextPo();
-
-    const pmap = productMap();
-    purchaseDraft.forEach(it=>{
-      const id = uid();
-      db.purchases.push({
-        id, po,
-        productId: it.productId,
-        qty: it.qty,
-        unitCost: it.unitCost,
-        date: dateStr,
-        supplier, supplierPhone
-      });
-      try{
-        const pn = pmap.get(it.productId)?.name || '';
-        recordAudit && recordAudit('add','purchases', id, `PO#${po} | ${pn} ×${it.qty}`, it.qty);
-      }catch(_){}
-    });
-
-    saveDB(db);
-    purchaseDraft = [];
-    
-    // Clear supplier fields after save
-    clearSupplierFields();
-    
-    // Update PO badges
-    const poPrev = document.getElementById('poPreview'); if(poPrev) poPrev.textContent = '#' + (db.counters?.nextPo ?? 1001);
-    const poPrev2= document.getElementById('poPreview2'); if(poPrev2) poPrev2.textContent= '#' + (db.counters?.nextPo ?? 1001);
-    
-    renderPurchaseDraft();
-    refreshAll();
-    
-    if(confirm(getTranslation(getUISettings().language, 'purchaseSavedPrintPrompt'))){
-      printPurchaseByPO(po);
-    }
-  };
-}
-
-const btnClear = document.getElementById('clearDraft');
-if (btnClear && !btnClear.__bound){
-  btnClear.__bound = true;
-  btnClear.onclick = ()=>{
-    if(!confirm(getTranslation(getUISettings().language, 'confirmClearDraft'))) return;
-    purchaseDraft = [];
-    clearSupplierFields(); // Clear supplier fields when clearing draft
-    renderPurchaseDraft();
-  };
-}
-
-const btnPrintDraft = document.getElementById('printDraft');
-if (btnPrintDraft && !btnPrintDraft.__bound){
-  btnPrintDraft.__bound = true;
-  btnPrintDraft.onclick = ()=> printPurchaseDraft();
-}
-
-
-  // 5) حذف شراء (كما عملتَ سابقًا)
-  tbody.onclick = async (e) => {
-    if (e.target.dataset.del) {
-      const id = e.target.dataset.del;
-      const rec = db.purchases.find(x => x.id === id);
-      const pn = (db.products.find(x => x.id === rec.productId)?.name) || '';
-      const res = await confirmDeleteUniversal('purchases', id, pn, rec.qty);
-      if (!res.ok) return;
-      db.purchases = db.purchases.filter(x => x.id !== id);
-      saveDB(db); refreshAll();
-      // اختياري بعد increment nextPo + refreshAll()
-const poPrev = document.getElementById('poPreview');
-if (poPrev) poPrev.textContent = '#' + (db.counters?.nextPo ?? 1001);
-      return;
-    }
-  };
-}
-    
-// مسودة فاتورة المشتريات (PO draft)
-let purchaseDraft = []; // [{productId, qty, unitCost}...]
-
-function renderPurchaseDraft(){
-  const box = document.getElementById('poDraftBox');
-  if(!box) return;
-  const table = document.getElementById('poDraftTable');
-  if(!table) return;
-
-  const pmap = productMap();
-  const tbody = table.tBodies[0];
-  tbody.innerHTML = '';
-
-  let sum = 0;
-  purchaseDraft.forEach((it, idx)=>{
-    const name = pmap.get(it.productId)?.name || '—';
-    const lineTotal = (Number(it.qty)||0) * (Number(it.unitCost)||0);
-    sum += lineTotal;
-    const tr = document.createElement('tr');
-    tr.innerHTML = `<td>${name}</td><td>${it.qty}</td><td>${(Number(it.unitCost)||0).toFixed(2)}</td><td>${lineTotal.toFixed(2)}</td>
-      <td><button data-rm="${idx}" class="btn-danger" type="button">${getTranslation(getUISettings().language, 'btnDelete')}</button></td>`;
-    tbody.appendChild(tr);
-  });
-
-  const tfoot = table.tFoot;
-  if(tfoot){
-    const cell = tfoot.querySelector('th#poDraftTotal');
-    if(cell) cell.textContent = sum.toFixed(2);
-  }
-
-  tbody.onclick = (e)=>{
-    const i = e.target.dataset.rm;
-    if(i===undefined) return;
-    if(!softConfirm(e.target)) return;
-    purchaseDraft.splice(Number(i),1);
-    renderPurchaseDraft();
-  };
-}
-
-function printPurchaseDraft(){
-  if(purchaseDraft.length===0) return alert(getTranslation(getUISettings().language, 'emptyDraftAlert'));
-  const sup = (document.getElementById('supName')?.value||'').trim();
-  const tel = (document.getElementById('supPhone')?.value||'').trim();
-  const pmap = productMap();
-  let rows = '';
-  let sub = 0;
-  purchaseDraft.forEach(it=>{
-    const name = pmap.get(it.productId)?.name || '—';
-    const line = (Number(it.qty)||0) * (Number(it.unitCost)||0);
-    sub += line;
-    rows += `<tr><td>${name}</td><td>${it.qty}</td><td>${(Number(it.unitCost)||0).toFixed(2)}</td><td>${line.toFixed(2)}</td></tr>`;
-  });
-  const w = window.open('', '_blank');
-  w.document.write(`
-    <html lang="${getUISettings().language}" dir="${getUISettings().language === 'ar' ? 'rtl' : 'ltr'}"><head><meta charset="utf-8"><title>مسودة PO</title>
-    <style>body{font-family:system-ui,Segoe UI,Roboto,Arial;padding:24px}table{width:100%;border-collapse:collapse}th,td{border:1px solid #ccc;padding:8px;text-align:right}</style>
-    </head><body>
-      <h2>${getTranslation(getUISettings().language, 'printDraftTitle')}</h2>
-      <div>${getTranslation(getUISettings().language, 'supplierLabel')}: ${sup||'-'} &nbsp; | &nbsp; ${getTranslation(getUISettings().language, 'phoneLabel')}: ${tel||'-'}</div>
-      <hr>
-      <table><thead><tr><th>${getTranslation(getUISettings().language, 'thProduct')}</th><th>${getTranslation(getUISettings().language, 'thQuantity')}</th><th>${getTranslation(getUISettings().language, 'thUnitCostDraft')}</th><th>${getTranslation(getUISettings().language, 'thTotal')}</th></tr></thead>
-      <tbody>${rows}</tbody>
-      <tfoot><tr><th colspan="3" style="text-align:left">${getTranslation(getUISettings().language, 'thTotal')}</th><th>${sub.toFixed(2)}</th></tr></tfoot>
-      </table>
-      <div style="margin-top:12px"><button onclick="window.print()">${getTranslation(getUISettings().language, 'btnPrintDraft')}</button></div>
-    </body></html>`);
-  w.document.close();
-}
-
-function printPurchaseByPO(po){
-  const list = (db.purchases||[]).filter(r=>r.po === po);
-  if(list.length===0) return alert('لا توجد فاتورة بهذا الرقم');
-  const pmap = productMap();
-  let rows = ''; let sub = 0; let sup=''; let tel='';
-  list.forEach(r=>{
-    const name = pmap.get(r.productId)?.name || '—';
-    const line = (Number(r.qty)||0)*(Number(r.unitCost)||0);
-    sub += line; rows += `<tr><td>${name}</td><td>${r.qty}</td><td>${(Number(r.unitCost)||0).toFixed(2)}</td><td>${line.toFixed(2)}</td></tr>`;
-    sup = r.supplier || sup; tel = r.supplierPhone || tel;
-  });
-  const w = window.open('', '_blank');
-  w.document.write(`
-    <html lang="ar" dir="rtl"><head><meta charset="utf-8"><title>PO #${po}</title>
-    <style>body{font-family:system-ui,Segoe UI,Roboto,Arial;padding:24px}table{width:100%;border-collapse:collapse}th,td{border:1px solid #ccc;padding:8px;text-align:right}</style>
-    </head><body>
-      <h2>فاتورة مشتريات #${po}</h2>
-      <div>المورّد: ${sup||'-'} &nbsp; | &nbsp; هاتف: ${tel||'-'}</div>
-      <hr>
-      <table><thead><tr><th>المنتج</th><th>الكمية</th><th>تكلفة الوحدة</th><th>الإجمالي</th></tr></thead>
-      <tbody>${rows}</tbody>
-      <tfoot><tr><th colspan="3" style="text-align:left">الإجمالي</th><th>${sub.toFixed(2)}</th></tr></tfoot>
-      </table>
-      <div style="margin-top:12px"><button onclick="window.print()">🖨️ طباعة / PDF</button></div>
-    </body></html>`);
-  w.document.close();
-}
-
-
-  // ====== Sales ======
-  let currentOrder = { items: [] };
-  const sellProduct = document.getElementById('sellProduct');
-  const sellQty = document.getElementById('sellQty');
-  const sellPrice = document.getElementById('sellPrice');
-  const lineDiscType = document.getElementById('lineDiscType');
-  const lineDiscVal = document.getElementById('lineDiscVal');
-  const orderDate = document.getElementById('orderDate'); if(orderDate) orderDate.value = nowISO();
-  const deliveryFee = document.getElementById('deliveryFee');
-  const cartTableBody = ()=> document.querySelector('#cartTable tbody');
-  const orderTotalCell = document.getElementById('orderTotalCell');
-
-  function getProductPrice(pid){ return (db.products.find(p=>p.id===pid)?.price)||0; }
-  function lineTotal(qty, unitPrice, discType, discValue){
-    qty = Number(qty)||0; unitPrice = Number(unitPrice)||0; discValue = Number(discValue)||0;
-    let gross = qty*unitPrice; let disc = 0;
-    if(discType==='amount') disc = discValue; else if(discType==='percent') disc = gross*(discValue/100);
-    return Math.max(0, gross - disc);
-  }
-
-  function renderCart(){
-    const tbody = cartTableBody(); if(!tbody) return; tbody.innerHTML='';
-    let total = 0; const pmap = productMap();
-    currentOrder.items.forEach((it, idx)=>{
-      const lt = lineTotal(it.qty, it.unitPrice, it.discountType, it.discountValue); total += lt;
-      const tr = document.createElement('tr');
-      const discLabel = it.discountType==='amount' ? `${(Number(it.discountValue)||0).toFixed(2)} AED` : (it.discountType==='percent'? `${(Number(it.discountValue)||0).toFixed(2)}%` : '—');
-      tr.innerHTML = `<td>${pmap.get(it.productId)?.name||'—'}</td><td>${it.qty}</td><td>${(Number(it.unitPrice)||0).toFixed(2)}</td><td>${discLabel}</td><td>${lt.toFixed(2)}</td>
-      <td><button data-del-line="${idx}" class="btn-danger" type="button">${getTranslation(getUISettings().language, 'btnDelete')}</button></td>`;
-      tbody.appendChild(tr);
-    });
-    const del = Number(deliveryFee?.value)||0;
-    if(orderTotalCell) orderTotalCell.textContent = (total + del).toFixed(2);
-    tbody.onclick = (e)=>{ const i = e.target.dataset.delLine; if(i===undefined) return; if(!softConfirm(e.target)) return; currentOrder.items.splice(Number(i),1); renderCart(); };
-  }
-
-  document.getElementById('addLine').onclick = ()=>{
-    const pid = sellProduct.value; if(!pid) return alert('اختر المنتج');
-    const qty = Number(sellQty.value)||0; if(qty<=0) return alert('أدخل كمية صحيحة');
-    const up = Number(sellPrice.value)||0; if(up<0) return alert('سعر غير صحيح');
-    currentOrder.items.push({ productId: pid, qty, unitPrice: up, discountType: lineDiscType.value, discountValue: Number(lineDiscVal.value)||0 });
-    renderCart();
-  };
-
-  document.getElementById('saveOrder').onclick = ()=>{
-    if(currentOrder.items.length===0) return alert(getTranslation(getUISettings().language, 'emptyCartAlert'));
-    const stats = calcStats();
-    for(const it of currentOrder.items){
-      const s = stats.find(x=>x.id===it.productId); if(s && s.stock < it.qty){
-        if(!confirm(getTranslation(getUISettings().language, 'stockExceedsConfirm'))) return;
-        break;
-      }
-    }
-    const delFee = Number(deliveryFee?.value)||0;
-    const custName = document.getElementById('customerName')?.value || '';
-    const custPhone = document.getElementById('customerPhone')?.value || '';
-    const _oid = uid(); db.sales.push({ id: _oid, date: (orderDate && orderDate.value) || nowISO(), items: deepClone(currentOrder.items), deliveryFee: delFee, customerName: custName, customerPhone: custPhone });
-    try{ recordAudit('add','sales', _oid, 'order', currentOrder.items.length);}catch{} saveDB(db); currentOrder.items = []; 
-    // Clear customer fields after saving
-    if(document.getElementById('customerName')) document.getElementById('customerName').value = '';
-    if(document.getElementById('customerPhone')) document.getElementById('customerPhone').value = '';
-    renderSales(); renderReports();
-    alert(getTranslation(getUISettings().language, 'orderSaved'));
-  };
-
-  function renderOrdersList(){
-    const tbody = document.querySelector('#ordersTable tbody'); if(!tbody) return; tbody.innerHTML='';
-    for(const o of db.sales){
-      const itemCount = Array.isArray(o.items)? o.items.length : 1;
-      let total=0;
-      if(Array.isArray(o.items)){
-        for(const it of o.items){ total += lineTotal(it.qty, it.unitPrice, it.discountType, it.discountValue); }
-      } else { total = (Number(o.qty)||0)*(Number(o.unitPrice)||0); }
-      total += Number(o.deliveryFee||0);
-      const tr = document.createElement('tr');
-      const customerName = o.customerName || '—';
-      const customerPhone = o.customerPhone || '—';
-      tr.innerHTML = `<td>${o.date||''}</td><td>${itemCount}</td><td>${total.toFixed(2)}</td><td>${customerName}</td><td>${customerPhone}</td>
-      <td class="flex"><button data-inv="${o.id}" type="button">${getTranslation(getUISettings().language, 'btnInvoice')}</button><button data-del-order="${o.id}" class="btn-danger" type="button">${getTranslation(getUISettings().language, 'btnDelete')}</button></td>`;
-      tbody.appendChild(tr);
-    }
-    tbody.onclick = async (e)=>{
-  const idDel = e.target.dataset.delOrder;
-  const idInv = e.target.dataset.inv;
-
-  if (idDel) {
-    const res = await confirmDeleteUniversal('sales', idDel, 'order');
-    if (!res.ok) return;
-    db.sales = db.sales.filter(x => x.id !== idDel);
-    saveDB(db); renderSales(); renderReports();
-    return;
-  }
-
-  if (idInv) { openInvoice(idInv); return; }
-};
-  }
-
-  function renderSales(){
-    if(sellProduct){
-      sellProduct.innerHTML = '<option value="">— اختر منتج —</option>' + db.products.map(p=>`<option value="${p.id}">${p.name}</option>`).join('');
-      sellProduct.onchange = ()=>{ sellPrice.value = getProductPrice(sellProduct.value).toFixed(2); };
-      sellPrice.value = sellProduct.value ? getProductPrice(sellProduct.value).toFixed(2) : '';
-    }
-    renderCart();
-    renderOrdersList();
-  }
-
-  // ====== Invoice ======
-  function fmt(n){ return (Number(n)||0).toFixed(2); }
-  function openInvoice(orderId){
-    const o = db.sales.find(x=>x.id===orderId); if(!o) return alert(getTranslation(getUISettings().language, 'orderNotFoundAlert'));
-    const pmap = productMap();
-    let sub=0;
-    const rows = (o.items||[]).map(it=>{
-      const name = pmap.get(it.productId)?.name || '—';
-      const lt = lineTotal(it.qty, it.unitPrice, it.discountType, it.discountValue);
-      sub += lt;
-      const discLabel = it.discountType==='amount' ? `${fmt(it.discountValue)} AED` :
-                        (it.discountType==='percent' ? `${fmt(it.discountValue)}%` : '—');
-      return `<tr><td>${name}</td><td>${it.qty}</td><td>${fmt(it.unitPrice)}</td><td>${discLabel}</td><td>${fmt(lt)}</td></tr>`;
-    }).join('');
-    const del = Number(o.deliveryFee||0);
-    const total = sub + del;
-    const win = window.open('', '_blank');
-    win.document.write(`
-      <html lang="ar" dir="rtl">
-      <head>
-        <meta charset="UTF-8" />
-        <title>فاتورة</title>
-        <style>
-          body{font-family:system-ui,Segoe UI,Roboto,Arial;padding:24px;color:#111}
-          h2{margin:0 0 12px 0}
-          table{width:100%;border-collapse:collapse;margin-top:10px}
-          th,td{border:1px solid #ccc;padding:8px;text-align:right}
-          tfoot th{background:#f7f7f7}
-        </style>
-      </head>
-      <body>
-        <h2>فاتورة</h2>
-        <div>تاريخ: ${o.date||''}</div>
-        ${o.customerName ? `<div>اسم العميل: ${o.customerName}</div>` : ''}
-        ${o.customerPhone ? `<div>رقم الهاتف: ${o.customerPhone}</div>` : ''}
-        <hr/>
-        <table>
-          <thead><tr><th>المنتج</th><th>الكمية</th><th>سعر الوحدة</th><th>خصم</th><th>الإجمالي</th></tr></thead>
-          <tbody>${rows}</tbody>
-          <tfoot>
-            <tr><th colspan="4" style="text-align:left">الإجمالي الفرعي</th><th>${fmt(sub)} AED</th></tr>
-            <tr><th colspan="4" style="text-align:left">رسوم التوصيل</th><th>${fmt(del)} AED</th></tr>
-            <tr><th colspan="4" style="text-align:left">الإجمالي الكلي</th><th>${fmt(total)} AED</th></tr>
-          </tfoot>
-        </table>
-        <div style="margin-top:16px">
-          <button onclick="window.print()">🖨️ طباعة / حفظ PDF</button>
-        </div>
-      </body>
-      </html>
-    `);
-    win.document.close();
-  }
-
-  // ====== Reports ======
-  function currency(n){ return (Number(n)||0).toFixed(2) + ' AED'; }
-  function renderReports(){
-    const stats = calcStats();
-    const invValue = sum(stats.map(s=>s.stock * s.avgCost));
-    const revenue = sum(stats.map(s=>s.revenue));
-    const deliverySum = (db.sales||[]).reduce((a,b)=> a + (Number(b.deliveryFee||0)), 0);
-    const cogs = sum(stats.map(s=>s.cogs));
-    const profit = (revenue + deliverySum) - cogs;
-
-    const kpis = document.getElementById('kpis'); if(kpis){
-      kpis.innerHTML = '';
-      const lang = getUISettings().language;
-      const items = [
-        {label: getTranslation(lang, 'kpiInventoryValue'), value: currency(invValue)},
-        {label: getTranslation(lang, 'kpiSalesRevenue'), value: currency(revenue)},
-        {label: getTranslation(lang, 'kpiDeliveryRevenue'), value: currency(deliverySum)},
-        {label: getTranslation(lang, 'kpiProfit'), value: currency(profit)},
-      ];
-      for(const it of items){
-        const d = document.createElement('div'); d.className='kpi';
-        d.innerHTML = `<div class="hint">${it.label}</div><div style="font-size:22px;margin-top:6px">${it.value}</div>`;
-        kpis.appendChild(d);
-      }
-    }
-
-    const lowT = document.querySelector('#lowStockTable tbody'); if(lowT){
-      lowT.innerHTML='';
-      const threshold = Number(db.settings.lowStockThreshold)||0;
-      for(const s of stats){
-        const tr = document.createElement('tr');
-        let tag = '<span class="tag ok">جيد</span>';
-        if(s.stock <= threshold) tag = '<span class="tag danger">منخفض</span>';
-        else if(s.stock <= threshold*1.5) tag = '<span class="tag warn">قيد الانخفاض</span>';
-        tr.innerHTML = `<td>${s.name}</td><td>${s.stock}</td><td>${tag}</td>`;
-        lowT.appendChild(tr);
-      }
-    }
-
-    const topT = document.querySelector('#topProductsTable tbody'); if(topT){
-      topT.innerHTML='';
-      const top = [...stats].sort((a,b)=>b.revenue - a.revenue).slice(0,10);
-      for(const s of top){
-        const tr = document.createElement('tr');
-        tr.innerHTML = `<td>${s.name}</td><td>${s.soldQty||0}</td><td>${currency(s.revenue)}</td>`;
-        topT.appendChild(tr);
-      }
-    }
-  }
-
-  // ====== Dashboard ======
-  function renderDashboard() {
-    if (typeof window.dashboardModule === 'undefined') return;
-    
-    // Initialize dashboard state
-    let currentPeriod = 'today';
-    let customStartDate = '';
-    let customEndDate = '';
-    
-    // Period selection handling
-    const periodButtons = document.querySelectorAll('[data-period]');
-    const customDateRange = document.getElementById('customDateRange');
-    const customStart = document.getElementById('customStartDate');
-    const customEnd = document.getElementById('customEndDate');
-    
-    function updatePeriodSelection(period) {
-      currentPeriod = period;
-      periodButtons.forEach(btn => {
-        btn.classList.toggle('active', btn.dataset.period === period);
-      });
-      customDateRange.hidden = period !== 'custom';
-      updateDashboard();
-    }
-    
-    function updateDashboard() {
-      customStartDate = customStart?.value || '';
-      customEndDate = customEnd?.value || '';
-      
-      // Update KPIs
-      const kpis = window.dashboardModule.calculateKPIs(currentPeriod, customStartDate, customEndDate);
-      renderKPIs(kpis);
-      
-      // Update chart
-      updateChart(kpis.dailyData);
-      
-      // Update summary table
-      const summary = window.dashboardModule.generateDailySummary(currentPeriod, customStartDate, customEndDate);
-      renderSummaryTable(summary);
-    }
-    
-    function renderKPIs(kpis) {
-      const kpiContainer = document.getElementById('dashboardKpis');
-      if (!kpiContainer) return;
-      
-      kpiContainer.innerHTML = '';
-      const lang = getUISettings().language;
-      const items = [
-        {label: getTranslation(lang, 'kpiSalesRevenue'), value: currency(kpis.totalSales)},
-        {label: getTranslation(lang, 'kpiCOGS'), value: currency(kpis.totalPurchases)},
-        {label: getTranslation(lang, 'kpiProfit'), value: currency(kpis.profit)},
-        {label: getTranslation(lang, 'kpiInventoryValue'), value: currency(kpis.stock)},
-      ];
-      
-      for(const item of items) {
-        const d = document.createElement('div');
-        d.className = 'kpi';
-        d.innerHTML = `<div class="hint">${item.label}</div><div style="font-size:22px;margin-top:6px">${item.value}</div>`;
-        kpiContainer.appendChild(d);
-      }
-    }
-    
-    function updateChart(dailyData) {
-      const dataset = document.getElementById('chartDataset')?.value || 'sales';
-      const chartType = document.getElementById('chartType')?.value || 'line';
-      window.dashboardModule.renderChart('dashboardChart', dailyData, chartType, dataset);
-    }
-    
-    function renderSummaryTable(summary) {
-      const tbody = document.querySelector('#dashboardSummaryTable tbody');
-      if (!tbody) return;
-      
-      tbody.innerHTML = '';
-      for(const day of summary) {
-        const tr = document.createElement('tr');
-        tr.innerHTML = `
-          <td>${day.date}</td>
-          <td>${currency(day.sales)}</td>
-          <td>${currency(day.purchases)}</td>
-          <td>${currency(day.profit)}</td>
-        `;
-        tbody.appendChild(tr);
-      }
-    }
-    
-    // Event listeners
-    periodButtons.forEach(btn => {
-      btn.addEventListener('click', () => updatePeriodSelection(btn.dataset.period));
-    });
-    
-    if (customStart) customStart.addEventListener('change', updateDashboard);
-    if (customEnd) customEnd.addEventListener('change', updateDashboard);
-    
-    const chartDataset = document.getElementById('chartDataset');
-    const chartType = document.getElementById('chartType');
-    if (chartDataset) chartDataset.addEventListener('change', () => updateChart(window.dashboardModule.calculateKPIs(currentPeriod, customStartDate, customEndDate).dailyData));
-    if (chartType) chartType.addEventListener('change', () => updateChart(window.dashboardModule.calculateKPIs(currentPeriod, customStartDate, customEndDate).dailyData));
-    
-    // Initialize with today's data
-    updatePeriodSelection('today');
-  }
-
-  // ====== Settings ======
-  const lowStockThreshold = document.getElementById('lowStockThreshold');
-  function renderSettings(){ if(lowStockThreshold) lowStockThreshold.value = db.settings.lowStockThreshold; }
-  document.getElementById('saveSettings').onclick = ()=>{ db.settings.lowStockThreshold = Number(lowStockThreshold.value)||0; try{ recordAudit('edit','settings','', 'lowStockThreshold='+db.settings.lowStockThreshold);}catch{} saveDB(db); alert(getTranslation(getUISettings().language, 'settingsSaved')); refreshAll(); };
-
-  // ====== Backup / Restore / Reset ======
-  document.getElementById('btnBackup').onclick = ()=>{
-    const blob = new Blob([JSON.stringify(db,null,2)], {type:'application/json'});
-    const a = document.createElement('a'); a.href = URL.createObjectURL(blob); a.download = 'mini-store-backup.json'; document.body.appendChild(a); a.click(); document.body.removeChild(a); URL.revokeObjectURL(a.href);
-  };
-  document.getElementById('btnRestore').onclick = ()=> document.getElementById('restoreFile').click();
-  document.getElementById('restoreFile').onchange = (e)=>{
-    const file = e.target.files[0]; if(!file) return;
-    const reader = new FileReader(); reader.onload = ()=>{ try{ db = JSON.parse(reader.result); saveDB(db); refreshAll(); alert(getTranslation(getUISettings().language, 'backupRestored')); }catch{ alert(getTranslation(getUISettings().language, 'invalidFile')); } }; reader.readAsText(file);
-    e.target.value='';
-  };
-  const btnResetEl = document.getElementById('btnReset');
-  btnResetEl.onclick = ()=>{
-    if(!softConfirm(btnResetEl,'تأكيد إعادة؟')) return;
-    db = deepClone(defaults); saveDB(db); refreshAll(); alert(getTranslation(getUISettings().language, 'systemReset'));
-  };
-
-  // ====== Soft Confirm ======
-  function softConfirm(btn, labelConfirm){
-    if(!labelConfirm) {
-      labelConfirm = getTranslation(getUISettings().language, 'confirmLabel');
-    }
-    if(!btn.dataset.arm){
-      btn.dataset.arm = '1';
-      const old = btn.textContent; btn.dataset.oldText = old;
-      btn.textContent = labelConfirm;
-      setTimeout(()=>{ btn.dataset.arm=''; btn.textContent = btn.dataset.oldText||old; }, 2000);
-      return false;
-    }
-    btn.dataset.arm='';
-    btn.textContent = btn.dataset.oldText||btn.textContent;
-    return true;
-  }
-  //========New=======
-  // تأكيد حذف موحّد + تسجيل في السجل
-async function confirmDeleteUniversal(module, id, name = '', extraQty = '') {
-  // صلاحيات
-  if (typeof can === 'function' && !can(module, 'delete')) {
-    alert(getTranslation(getUISettings().language, 'alertNoDeletePermission'));
-    return { ok: false };
-  }
-
-  const title = getTranslation(getUISettings().language, 'deleteConfirmTitle')
-    .replace('{name}', name ? '«' + name + '»' : getTranslation(getUISettings().language, 'genericItem'))
-    .replace('{module}', module);
-  if (!confirm(title)) return { ok: false };
-
-  // سبب اختياري
-  const reason = prompt(getTranslation(getUISettings().language, 'deleteReasonPrompt')) || '';
+  } catch (e) { }
 
   try {
-    if (typeof recordAudit === 'function') {
-      const details = name ? `${name}${reason ? ' — ' + reason : ''}` : reason;
-      recordAudit('delete', module, id || '', details, extraQty);
-    }
-  } catch (_) {}
+    var ls = localStorage.getItem('pos.lang');
+    if (ls) lang = ls;
+  } catch (e) { }
 
-  return { ok: true, reason };
-}
-  // ====== Export CSV ======
-  function exportTableToCSV(tableId, filename, mode='window'){
-    const table = document.getElementById(tableId);
-    if(!table){ alert(getTranslation(getUISettings().language, 'tableNotFound')); return; }
+  if (typeof applyTranslations === 'function') applyTranslations(lang);
+  if (typeof applyUISettings === 'function') applyUISettings();
 
-    const headRow = table.tHead && table.tHead.rows[0] ? table.tHead.rows[0] : null;
-    const totalCols = headRow ? headRow.cells.length : (table.rows[0] ? table.rows[0].cells.length : 0);
-    const includeIdx = Array.from({length: totalCols}, (_,i)=>i).filter(i=>{
-      const th = headRow ? headRow.cells[i] : null;
-      if(!th) return true;
-      const text = (th.textContent||'').replace(/\s+/g,' ').trim();
-      const interactive = th.querySelector && th.querySelector('button,input,select');
-      return text !== '' && !interactive;
-    });
-
-    const allRows = Array.from(table.querySelectorAll('thead tr, tbody tr, tfoot tr'));
-    const csv = allRows.map(row => {
-      const cells = Array.from(row.children);
-      const parts = includeIdx.map(i=>{
-        const cell = cells[i]; if(!cell) return '';
-        if(cell.querySelector && cell.querySelector('button,input,select')) return '';
-        let text = (cell.textContent||'').replace(/\s+/g,' ').trim();
-        if (text.includes('"') || text.includes(',')) text = '"' + text.replace(/"/g,'""') + '"';
-        return text;
-      });
-      return parts.join(',');
-    }).join('\n');
-
-    const csvWithBom = "\uFEFF" + csv;
-    const safeName = (filename && filename.endsWith('.csv')) ? filename : (filename || 'export') + '.csv';
-
-    if (mode === 'window'){
-      const url = 'data:text/csv;charset=utf-8,' + encodeURIComponent(csvWithBom);
-      const w = window.open(url, '_blank');
-      if(!w || w.closed){
-        try{
-          const blob = new Blob([csvWithBom], {type:'text/csv;charset=utf-8;'});
-          const a = document.createElement('a');
-          a.href = URL.createObjectURL(blob);
-          a.download = safeName;
-          document.body.appendChild(a); a.click(); document.body.removeChild(a);
-          setTimeout(()=> URL.revokeObjectURL(a.href), 500);
-        }catch(err){ console.error('CSV open/download failed', err); alert('تعذر فتح/تنزيل CSV: '+err.message); }
-      }
-      return;
-    }
-
-    try{
-      const blob = new Blob([csvWithBom], {type:'text/csv;charset=utf-8;'});
-      const a = document.createElement('a');
-      a.href = URL.createObjectURL(blob);
-      a.download = safeName;
-      document.body.appendChild(a); a.click(); document.body.removeChild(a);
-      setTimeout(()=> URL.revokeObjectURL(a.href), 500);
-    }catch(err){ console.error('CSV download failed', err); alert('تعذر التصدير: '+err.message); }
-  }
-
-  document.addEventListener('click', (e)=>{
-    const btn = e.target.closest('[data-export][data-table]');
-    if(!btn) return;
-    try{ exportTableToCSV(btn.dataset.table, btn.dataset.filename || 'export.csv', 'window'); }
-    catch(err){ console.error(err); alert('تعذر التصدير: '+ err.message); }
-  });
-
-  // ====== Refresh All ======
-  function refreshAll(){
-    renderProducts(); renderPurchases(); renderSales(); renderReports(); renderSettings();
-    try { if (typeof renderAudit === 'function') renderAudit(); } catch (e) { console.warn('renderAudit error', e); }
-    try { if (typeof renderUsersAdmin === 'function') renderUsersAdmin(); } catch (e) { console.warn('renderUsersAdmin error', e); }
-    try { if (typeof renderDashboard === 'function') renderDashboard(); } catch (e) { console.warn('renderDashboard error', e); }
-  }
-
-  // ====== Auth UI ======
-  const authOverlay = document.getElementById('authOverlay');
-  const authBody = document.getElementById('authBody');
-  const authTitle = document.getElementById('authTitle');
-  const appRoot = document.getElementById('appRoot');
-  const whoami = document.getElementById('whoami');
-  const btnLogout = document.getElementById('btnLogout');
-  btnLogout.onclick = ()=>{ clearSession(); location.reload(); };
-
-  function showAuth(){
-    authOverlay.classList.remove('is-hidden');
-    authOverlay.hidden = false;
-    authOverlay.style.display = 'flex';
-    authOverlay.setAttribute('aria-hidden','false');
-    appRoot.hidden = true;
-  }
-  function hideAuth(){
-    authOverlay.classList.add('is-hidden');
-    authOverlay.hidden = true;
-    authOverlay.style.display = 'none';
-    authOverlay.setAttribute('aria-hidden','true');
-    appRoot.hidden = false;
-  }
-
-  function renderLogin(){
-    const ui = getUISettings();
-    const lang = ui.language;
-    authTitle.textContent = getTranslation(lang, 'authTitleLogin');
-    authBody.innerHTML = `
-      <label data-i18n="usernameLabel">${getTranslation(lang, 'usernameLabel')}</label><input id="loginUser" />
-      <label data-i18n="passwordLabel">${getTranslation(lang, 'passwordLabel')}</label><input id="loginPass" type="password" />
-      <div class="flex" style="margin-top:10px">
-        <button id="doLogin" class="btn-primary" type="button" data-i18n="btnLogin">${getTranslation(lang, 'btnLogin')}</button>
-      </div>
-      <div class="hint" data-i18n="loginHint">${getTranslation(lang, 'loginHint')}</div>
-    `;
-    // Apply translations to the newly injected content
-    const elementsWithI18n = authBody.querySelectorAll('[data-i18n], [data-i18n-placeholder], [data-i18n-title], [data-i18n-aria], [data-i18n-alt]');
-    elementsWithI18n.forEach(element => translateElement(element, lang));
-    
-    document.getElementById('doLogin').onclick = doLogin;
-  }
-
-  function renderCreate(){
-    const ui = getUISettings();
-    const lang = ui.language;
-    authTitle.textContent = getTranslation(lang, 'authTitleRegister');
-    authBody.innerHTML = `
-      <label data-i18n="usernameLabel">${getTranslation(lang, 'usernameLabel')}</label><input id="regUser" data-i18n-placeholder="usernamePlaceholder" placeholder="${getTranslation(lang, 'usernamePlaceholder')}" />
-      <label data-i18n="passwordLabel">${getTranslation(lang, 'passwordLabel')}</label><input id="regPass" type="password" />
-      <label data-i18n="confirmPasswordLabel">${getTranslation(lang, 'confirmPasswordLabel')}</label><input id="regPass2" type="password" />
-      <div class="flex" style="margin-top:10px">
-        <button id="doCreate" class="btn-primary" type="button" data-i18n="btnRegister">${getTranslation(lang, 'btnRegister')}</button>
-      </div>
-      <div class="hint" data-i18n="authHint">${getTranslation(lang, 'authHint')}</div>
-    `;
-    // Apply translations to the newly injected content
-    const elementsWithI18n = authBody.querySelectorAll('[data-i18n], [data-i18n-placeholder], [data-i18n-title], [data-i18n-aria], [data-i18n-alt]');
-    elementsWithI18n.forEach(element => translateElement(element, lang));
-    
-    document.getElementById('doCreate').onclick = doCreate;
-  }
-
-  async function doCreate(){
-    const u = document.getElementById('regUser').value.trim();
-    const p1 = document.getElementById('regPass').value;
-    const p2 = document.getElementById('regPass2').value;
-    if(!u || !p1) return alert(getTranslation(getUISettings().language, 'enterUsernamePassword'));
-    if(p1 !== p2) return alert(getTranslation(getUISettings().language, 'passwordConfirmMismatch'));
-    const users = loadUsers();
-    if(users.find(x=>x.username.toLowerCase()===u.toLowerCase())) return alert(getTranslation(getUISettings().language, 'usernameAlreadyExists'));
-    const salt = genSalt();
-    const hash = await sha256(p1 + salt);
-    users.push({ username:u, salt, hash });
-    saveUsers(users);
-    alert(getTranslation(getUISettings().language, 'accountCreated'));
-    renderLogin();
-  }
-
-  async function doLogin(){
-    const u = document.getElementById('loginUser').value.trim();
-    const p = document.getElementById('loginPass').value;
-    const users = loadUsers();
-    const rec = users.find(x=>x.username.toLowerCase()===u.toLowerCase());
-    if(!rec) return alert(getTranslation(getUISettings().language, 'invalidCredentials'));
-    const hash = await sha256(p + rec.salt);
-    if(hash !== rec.hash) return alert(getTranslation(getUISettings().language, 'invalidCredentials'));
-    setSession(rec.username);
-    startApp(rec.username);
-  }
-
-  async function startApp(username){
-    currentUser = username;
-    dbKey = dbKeyBase; try { const legacy = localStorage.getItem(dbKeyBase + ':' + username); if(legacy && !localStorage.getItem(dbKey)) localStorage.setItem(dbKey, legacy); } catch(e){}
-    db = loadDB();
-    App.setDB(db);
-    whoami.textContent = getTranslation(getUISettings().language, 'currentUser') + ' ' + username;
-    btnLogout.hidden = false;
-    hideAuth();
-    applyUISettings(); // Apply UI settings on startup
-    activateTab(getLastTab());
-  }
-
-  // ====== Change password ======
-  document.getElementById('btnChangePass').onclick = async ()=>{
-    const cur = document.getElementById('curPass').value;
-    const n1 = document.getElementById('newPass').value;
-    const n2 = document.getElementById('newPass2').value;
-    if(!n1 || n1 !== n2) return alert(getTranslation(getUISettings().language, 'passwordMismatch'));
-    const users = loadUsers();
-    const rec = users.find(x=>x.username===currentUser);
-    if(!rec) return alert(getTranslation(getUISettings().language, 'accountNotFound'));
-    const hcur = await sha256(cur + rec.salt);
-    if(hcur !== rec.hash) return alert(getTranslation(getUISettings().language, 'wrongCurrentPassword'));
-    rec.salt = genSalt();
-    rec.hash = await sha256(n1 + rec.salt);
-    saveUsers(users);
-    alert(getTranslation(getUISettings().language, 'passwordChanged'));
-    document.getElementById('curPass').value = document.getElementById('newPass').value = document.getElementById('newPass2').value = '';
-  };
-
-  // ====== General Settings Event Handlers ======
-  // Language change
-  document.addEventListener('DOMContentLoaded', () => {
-    const uiLanguage = document.getElementById('uiLanguage');
-    const uiTheme = document.getElementById('uiTheme');
-    const uiAccent = document.getElementById('uiAccent');
-    const shopName = document.getElementById('shopName');
-    const shopLogoFile = document.getElementById('shopLogoFile');
-    const removeLogoBtn = document.getElementById('removeLogoBtn');
-    
-    if (uiLanguage) {
-      uiLanguage.onchange = () => {
-        const ui = getUISettings();
-        ui.language = uiLanguage.value;
-        saveUISettings(ui);
-        applyUISettings();
-      };
-    }
-    
-    if (uiTheme) {
-      uiTheme.onchange = () => {
-        const ui = getUISettings();
-        ui.theme = uiTheme.value;
-        saveUISettings(ui);
-        applyUISettings();
-      };
-    }
-    
-    if (uiAccent) {
-      uiAccent.onchange = () => {
-        const ui = getUISettings();
-        ui.accent = uiAccent.value;
-        saveUISettings(ui);
-        applyUISettings();
-      };
-    }
-    
-    if (shopName) {
-      shopName.onchange = () => {
-        const ui = getUISettings();
-        ui.shopName = shopName.value;
-        saveUISettings(ui);
-        applyUISettings();
-      };
-    }
-    
-    if (shopLogoFile) {
-      shopLogoFile.onchange = (e) => {
-        const file = e.target.files[0];
-        if (file) {
-          const reader = new FileReader();
-          reader.onload = () => {
-            const ui = getUISettings();
-            ui.shopLogo = reader.result;
-            saveUISettings(ui);
-            applyUISettings();
-            renderGeneralSettings();
-          };
-          reader.readAsDataURL(file);
+  var langDropdown = document.getElementById('uiLanguage');
+  if (langDropdown) {
+    langDropdown.value = lang;
+    if (!langDropdown._i18nBound) {
+      langDropdown.addEventListener('change', function () {
+        var v = this.value;
+        try { localStorage.setItem('pos.lang', v); } catch (e) {}
+        if (typeof saveUISettings === 'function') {
+          try { saveUISettings({ language: v }); } catch (e) {}
         }
-      };
+        if (typeof applyTranslations === 'function') applyTranslations(v);
+        if (typeof applyUISettings === 'function') applyUISettings();
+      });
+      langDropdown._i18nBound = true;
     }
-    
-    if (removeLogoBtn) {
-      removeLogoBtn.onclick = () => {
-        const ui = getUISettings();
-        ui.shopLogo = '';
-        saveUISettings(ui);
-        applyUISettings();
-        renderGeneralSettings();
-      };
-    }
-    
-    // Color swatches
-    document.querySelectorAll('.color-swatch').forEach(swatch => {
-      swatch.onclick = () => {
-        const ui = getUISettings();
-        ui.accent = swatch.dataset.color;
-        document.getElementById('uiAccent').value = ui.accent;
-        saveUISettings(ui);
-        applyUISettings();
-      };
-    });
-  });
+  }
+}
 
-  // ====== Boot ======
-  (async function boot(){
-    const session = getSession();
-    const users = loadUsers();
-    showAuth();
-    if(!users.length){
-      renderCreate();
-    }else if(session && session.username){
-      await startApp(session.username);
-    }else{
-      renderLogin();
-    }
-  })();
-  </script>
-
-  <!-- i18n translation files -->
-  <script src="i18n/en.js"></script>
-  <script src="i18n/ar.js"></script>
-  
-  <!-- LILIJA modules -->
-  <script src="modules/utils.js"></script>
-  <script src="modules/auth.js"></script>
-  <script src="modules/data.js"></script>
-  <script src="modules/users_admin.js"></script>
-  <script src="modules/audit_log.js"></script>
-  <script src="modules/dashboard.js"></script>
-  
-  <!-- i18n runtime patch -->
-  <script src="scripts/i18n-fix.js"></script>
-
-  <script>
-    document.addEventListener('DOMContentLoaded', () => {
-      // Initialize language from localStorage
-      initializeLanguage();
-      
-      if (document.querySelector('.tab.active')?.dataset.tab === 'audit' && typeof renderAudit === 'function') {
-        renderAudit();
-      }
-    });
-  </script>
-
-</body>
-</html>
+document.addEventListener('DOMContentLoaded', initializeLanguage);
+</script>
