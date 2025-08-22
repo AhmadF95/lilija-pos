@@ -132,7 +132,7 @@
       
       // Header and app branding
       {sel: 'title', key: 'appTitle'},
-      {sel: '#shopNameSpan', key: 'appName'},
+      {sel: '#appVersion', key: 'appName'},
       
       // General settings elements
       {sel: '#generalSettingsTitle', key: 'generalSettingsTitle'},
