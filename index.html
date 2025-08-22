@@ -282,13 +282,13 @@
 
     <!-- الإعدادات -->
     <section class="panel" data-tab="settings" hidden>
-      <h2>إعدادات</h2>
+      <h2 data-i18n="settingsTitle">إعدادات</h2>
       <div class="grid">
         <div class="g6">
-          <label>حد التنبيه لانخفاض المخزون (لكل منتج)</label>
+          <label data-i18n="lowStockThresholdLabel">حد التنبيه لانخفاض المخزون (لكل منتج)</label>
           <input id="lowStockThreshold" type="number" min="0" step="1" />
-          <button class="btn-primary" id="saveSettings" type="button">💾 حفظ الإعدادات</button>
-          <div class="hint">يظهر تنبيه "منخفض" عندما يقل رصيد المنتج عن هذا الحد.</div>
+          <button class="btn-primary" id="saveSettings" type="button" data-i18n="saveSettingsBtn">💾 حفظ الإعدادات</button>
+          <div class="hint" data-i18n="lowStockHint">يظهر تنبيه "منخفض" عندما يقل رصيد المنتج عن هذا الحد.</div>
         </div>
         <div class="g6">
           <h3 style="margin-top:0" data-i18n="passwordSectionTitle">كلمة المرور</h3>
@@ -392,11 +392,12 @@
     const isRoot = me && me.isRoot === true;
     const canCreate = isRoot && users.length < 5;
 
-    let htmlUI = '<div class="hint">'+(isRoot?'الأدمن الرئيسي فقط يمكنه إنشاء المستخدمين.':'عرض فقط')+'</div>';
+    let htmlUI = '<div class="hint">'+(isRoot?getTranslation(getUISettings().language, 'usersHintRoot'):getTranslation(getUISettings().language, 'usersHintView'))+'</div>';
     if(isRoot){
-      htmlUI += '<div class="flex" style="gap:8px;margin:8px 0"><button id="btnCreateUser" class="btn-primary" type="button">➕ إنشاء مستخدم جديد</button><span class="hint">(' + users.length + '/5)</span></div>';
+      htmlUI += '<div class="flex" style="gap:8px;margin:8px 0"><button id="btnCreateUser" class="btn-primary" type="button">'+getTranslation(getUISettings().language, 'btnCreateUser')+'</button><span class="hint">(' + users.length + '/5)</span></div>';
     }
-    htmlUI += '<div class="table-wrap"><table><thead><tr><th>المستخدم</th><th>النوع</th><th>المنتجات</th><th>المبيعات</th><th>المشتريات</th><th>المستخدمون</th><th>الإعدادات</th><th>سجل الحركات</th><th></th></tr></thead><tbody>';
+    const lang = getUISettings().language;
+    htmlUI += '<div class="table-wrap"><table><thead><tr><th>'+getTranslation(lang, 'thUsername')+'</th><th>'+getTranslation(lang, 'thType')+'</th><th>'+getTranslation(lang, 'products')+'</th><th>'+getTranslation(lang, 'sales')+'</th><th>'+getTranslation(lang, 'purchases')+'</th><th>'+getTranslation(lang, 'thUsers')+'</th><th>'+getTranslation(lang, 'thSettings')+'</th><th>'+getTranslation(lang, 'thAudit')+'</th><th></th></tr></thead><tbody>';
 
     function permCells(u, mod){
       const p=(u.perms&&u.perms[mod])||{};
@@ -404,11 +405,11 @@
         const checked = (u.type==='admin') ? 'checked disabled' : (p[act]?'checked':'');
         return '<label class="hint" style="display:inline-flex;gap:4px;align-items:center;margin:0 6px"><input data-uid="'+u.username+'" data-mod="'+mod+'" data-act="'+act+'" type="checkbox" '+checked+' /><span>'+lbl+'</span></label>';
       }
-      return u.isRoot ? '—' : cb('view','رؤية') + cb('edit','تعديل') + cb('delete','حذف');
+      return u.isRoot ? '—' : cb('view',getTranslation(getUISettings().language, 'permissionView')) + cb('edit',getTranslation(getUISettings().language, 'permissionEdit')) + cb('delete',getTranslation(getUISettings().language, 'permissionDelete'));
     }
 
     users.forEach(u=>{
-      htmlUI += '<tr><td>'+u.username+'</td><td>'+(u.isRoot? '<span class="hint">أدمن رئيسي</span>' : `<select data-role="${u.username}"><option value="user" ${u.type==='user'?'selected':''}>User</option><option value="admin" ${u.type==='admin'?'selected':''}>Admin</option></select>` )+'</td>'
+      htmlUI += '<tr><td>'+u.username+'</td><td>'+(u.isRoot? '<span class="hint">'+getTranslation(getUISettings().language, 'rootAdminLabel')+'</span>' : `<select data-role="${u.username}"><option value="user" ${u.type==='user'?'selected':''}>User</option><option value="admin" ${u.type==='admin'?'selected':''}>Admin</option></select>` )+'</td>'
       + '<td>'+permCells(u,'products')+'</td>'
       + '<td>'+permCells(u,'sales')+'</td>'
       + '<td>'+permCells(u,'purchases')+'</td>'
@@ -836,7 +837,39 @@ function nextPo(){
       kpiSalesRevenue: 'إيرادات المبيعات',
       kpiDeliveryRevenue: 'إيرادات التوصيل',
       kpiCOGS: 'تكلفة البضاعة المباعة',
-      kpiProfit: 'الربح الإجمالي (تقديري)'
+      kpiProfit: 'الربح الإجمالي (تقديري)',
+      
+      // Settings section
+      settingsTitle: 'إعدادات',
+      lowStockThresholdLabel: 'حد التنبيه لانخفاض المخزون (لكل منتج)',
+      saveSettingsBtn: '💾 حفظ الإعدادات',
+      lowStockHint: 'يظهر تنبيه "منخفض" عندما يقل رصيد المنتج عن هذا الحد.',
+      
+      // Color names for swatches
+      colorCyan: 'سماوي',
+      colorNeonGreen: 'أخضر نيون',
+      colorNeonPurple: 'بنفسجي نيون',
+      colorNeonBlue: 'أزرق نيون',
+      colorNeonOrange: 'برتقالي نيون',
+      colorPurple: 'بنفسجي',
+      
+      // Additional error messages
+      emptyDraftAlert: 'المسودة فارغة',
+      productNameExists: 'اسم المنتج موجود مسبقًا',
+      skuExists: 'الباركود/‏SKU مستخدم مسبقًا',
+      
+      // User admin hints
+      usersHintRoot: 'الأدمن الرئيسي فقط يمكنه إنشاء المستخدمين.',
+      usersHintView: 'عرض فقط',
+      btnCreateUser: '➕ إنشاء مستخدم جديد',
+      permissionView: 'رؤية',
+      permissionEdit: 'تعديل',
+      permissionDelete: 'حذف',
+      
+      // Sales alerts
+      emptyCartAlert: 'السلة فارغة',
+      stockExceedsConfirm: 'هناك صنف كميته تتجاوز المخزون. متابعة؟',
+      orderNotFoundAlert: 'الطلب غير موجود'
     },
     en: {
       // Document title
@@ -1101,7 +1134,39 @@ function nextPo(){
       kpiSalesRevenue: 'Sales revenue',
       kpiDeliveryRevenue: 'Delivery revenue',
       kpiCOGS: 'Cost of goods sold',
-      kpiProfit: 'Profit'
+      kpiProfit: 'Profit',
+      
+      // Settings section
+      settingsTitle: 'Settings',
+      lowStockThresholdLabel: 'Low stock alert threshold (per product)',
+      saveSettingsBtn: '💾 Save Settings',
+      lowStockHint: 'Shows "low" alert when product stock falls below this threshold.',
+      
+      // Color names for swatches
+      colorCyan: 'Cyan',
+      colorNeonGreen: 'Neon Green',
+      colorNeonPurple: 'Neon Purple',
+      colorNeonBlue: 'Neon Blue',
+      colorNeonOrange: 'Neon Orange',
+      colorPurple: 'Purple',
+      
+      // Additional error messages
+      emptyDraftAlert: 'Draft is empty',
+      productNameExists: 'Product name already exists',
+      skuExists: 'Barcode/SKU already in use',
+      
+      // User admin hints
+      usersHintRoot: 'Only the root admin can create users.',
+      usersHintView: 'View only',
+      btnCreateUser: '➕ Create New User',
+      permissionView: 'View',
+      permissionEdit: 'Edit',
+      permissionDelete: 'Delete',
+      
+      // Sales alerts
+      emptyCartAlert: 'Cart is empty',
+      stockExceedsConfirm: 'There is an item whose quantity exceeds inventory. Continue?',
+      orderNotFoundAlert: 'Order not found'
     }
   };
 
@@ -1513,12 +1578,12 @@ function nextPo(){
 
       // Check for duplicates using shared utilities (excluding current product)
       if (isDuplicateProductName(name, p.id)) {
-        alert('اسم المنتج موجود مسبقًا');
+        alert(getTranslation(getUISettings().language, 'productNameExists'));
         return;
       }
 
       if (isDuplicateSKU(sku, p.id)) {
-        alert('الباركود/‏SKU مستخدم مسبقًا');
+        alert(getTranslation(getUISettings().language, 'skuExists'));
         return;
       }
 
@@ -1684,7 +1749,7 @@ const btnSavePO = document.getElementById('savePO');
 if (btnSavePO && !btnSavePO.__bound){
   btnSavePO.__bound = true;
   btnSavePO.onclick = ()=>{
-    if(purchaseDraft.length===0) return alert('المسودة فارغة');
+    if(purchaseDraft.length===0) return alert(getTranslation(getUISettings().language, 'emptyDraftAlert'));
 
     const supplier      = (document.getElementById('supName')?.value||'').trim();
     const supplierPhone = (document.getElementById('supPhone')?.value||'').trim();
@@ -1803,7 +1868,7 @@ function renderPurchaseDraft(){
 }
 
 function printPurchaseDraft(){
-  if(purchaseDraft.length===0) return alert('المسودة فارغة');
+  if(purchaseDraft.length===0) return alert(getTranslation(getUISettings().language, 'emptyDraftAlert'));
   const sup = (document.getElementById('supName')?.value||'').trim();
   const tel = (document.getElementById('supPhone')?.value||'').trim();
   const pmap = productMap();
@@ -1906,11 +1971,11 @@ function printPurchaseByPO(po){
   };
 
   document.getElementById('saveOrder').onclick = ()=>{
-    if(currentOrder.items.length===0) return alert('السلة فارغة');
+    if(currentOrder.items.length===0) return alert(getTranslation(getUISettings().language, 'emptyCartAlert'));
     const stats = calcStats();
     for(const it of currentOrder.items){
       const s = stats.find(x=>x.id===it.productId); if(s && s.stock < it.qty){
-        if(!confirm('هناك صنف كميته تتجاوز المخزون. متابعة؟')) return;
+        if(!confirm(getTranslation(getUISettings().language, 'stockExceedsConfirm'))) return;
         break;
       }
     }
@@ -1971,7 +2036,7 @@ function printPurchaseByPO(po){
   // ====== Invoice ======
   function fmt(n){ return (Number(n)||0).toFixed(2); }
   function openInvoice(orderId){
-    const o = db.sales.find(x=>x.id===orderId); if(!o) return alert('الطلب غير موجود');
+    const o = db.sales.find(x=>x.id===orderId); if(!o) return alert(getTranslation(getUISettings().language, 'orderNotFoundAlert'));
     const pmap = productMap();
     let sub=0;
     const rows = (o.items||[]).map(it=>{
