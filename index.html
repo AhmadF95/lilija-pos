@@ -173,7 +173,7 @@
           <table id="cartTable">
             <thead><tr><th data-i18n="thProduct">المنتج</th><th data-i18n="thQuantity">الكمية</th><th data-i18n="thPrice">سعر الوحدة</th><th data-i18n="thDiscount">خصم</th><th data-i18n="thTotal">الإجمالي</th><th></th></tr></thead>
             <tbody></tbody>
-            <tfoot><tr><th colspan="4" style="text-align:left" data-i18n="orderTotalLabel">إجمالي الطلب</th><th id="orderTotalCell">0.00</th><th></th></tr></tfoot>
+            <tfoot><tr><th colspan="4" style="text-align:right" data-i18n="orderTotalLabel">إجمالي الطلب</th><th id="orderTotalCell">0.00</th><th></th></tr></tfoot>
           </table>
 
           <div class="flex" style="margin-top:18px"><h3 style="margin:0" data-i18n="previousOrdersTitle">الطلبات السابقة</h3><div class="right">
@@ -1196,14 +1196,32 @@ function nextPo(){
   
   // Get translation for a key, with fallback to English
   function getTranslation(lang, key) {
+    // Priority 1: External i18n files (window.I18N_AR, window.I18N_EN)
+    if (lang === 'ar' && window.I18N_AR && window.I18N_AR[key]) {
+      return window.I18N_AR[key];
+    }
+    if (lang === 'en' && window.I18N_EN && window.I18N_EN[key]) {
+      return window.I18N_EN[key];
+    }
+    
+    // Priority 2: Fallback external files (opposite language)
+    if (lang === 'ar' && window.I18N_EN && window.I18N_EN[key]) {
+      return window.I18N_EN[key];
+    }
+    if (lang === 'en' && window.I18N_AR && window.I18N_AR[key]) {
+      return window.I18N_AR[key];
+    }
+    
+    // Priority 3: Inline i18n object (legacy fallback)
     if (i18n[lang] && i18n[lang][key]) {
       return i18n[lang][key];
     }
-    // Fallback to English
+    // Fallback to English inline
     if (i18n.en && i18n.en[key]) {
       return i18n.en[key];
     }
-    // If key doesn't exist in either language, return the key itself
+    
+    // Priority 4: Return the key itself as final fallback
     return key;
   }
 
@@ -1526,7 +1544,9 @@ function nextPo(){
   const pSku = document.getElementById('pSku');
   const pCat = document.getElementById('pCat');
   const pPrice = document.getElementById('pPrice');
-  document.getElementById('addProduct').onclick = () => {
+  const addProductBtn = document.getElementById('addProduct');
+  if (addProductBtn) {
+    addProductBtn.onclick = () => {
   // قراءات وحسابات أولية
   const nameRaw = pName.value || '';
   const skuRaw  = pSku.value || '';
@@ -1564,6 +1584,7 @@ function nextPo(){
 
   refreshAll();
 };
+  }
 
  function renderProducts() {
   const tbody = document.querySelector('#productsTable tbody');
@@ -1712,7 +1733,7 @@ if (purchasesSection && !document.getElementById('poDraftBox')){
       <table id="poDraftTable">
         <thead><tr><th data-i18n="thProduct">المنتج</th><th data-i18n="thQuantity">الكمية</th><th data-i18n="thUnitCostDraft">تكلفة الوحدة</th><th data-i18n="thTotal">الإجمالي</th><th></th></tr></thead>
         <tbody></tbody>
-        <tfoot><tr><th colspan="3" style="text-align:left">الإجمالي</th><th id="poDraftTotal">0.00</th><th></th></tr></tfoot>
+        <tfoot><tr><th colspan="3" style="text-align:right">الإجمالي</th><th id="poDraftTotal">0.00</th><th></th></tr></tfoot>
       </table>
       </div>
     </div>
@@ -1922,7 +1943,7 @@ function printPurchaseDraft(){
       <hr>
       <table><thead><tr><th>${getTranslation(getUISettings().language, 'thProduct')}</th><th>${getTranslation(getUISettings().language, 'thQuantity')}</th><th>${getTranslation(getUISettings().language, 'thUnitCostDraft')}</th><th>${getTranslation(getUISettings().language, 'thTotal')}</th></tr></thead>
       <tbody>${rows}</tbody>
-      <tfoot><tr><th colspan="3" style="text-align:left">${getTranslation(getUISettings().language, 'thTotal')}</th><th>${sub.toFixed(2)}</th></tr></tfoot>
+      <tfoot><tr><th colspan="3" style="text-align:right">${getTranslation(getUISettings().language, 'thTotal')}</th><th>${sub.toFixed(2)}</th></tr></tfoot>
       </table>
       <div style="margin-top:12px"><button onclick="window.print()">${getTranslation(getUISettings().language, 'btnPrintDraft')}</button></div>
     </body></html>`);
@@ -1950,7 +1971,7 @@ function printPurchaseByPO(po){
       <hr>
       <table><thead><tr><th>المنتج</th><th>الكمية</th><th>تكلفة الوحدة</th><th>الإجمالي</th></tr></thead>
       <tbody>${rows}</tbody>
-      <tfoot><tr><th colspan="3" style="text-align:left">الإجمالي</th><th>${sub.toFixed(2)}</th></tr></tfoot>
+      <tfoot><tr><th colspan="3" style="text-align:right">الإجمالي</th><th>${sub.toFixed(2)}</th></tr></tfoot>
       </table>
       <div style="margin-top:12px"><button onclick="window.print()">🖨️ طباعة / PDF</button></div>
     </body></html>`);
@@ -1994,15 +2015,20 @@ function printPurchaseByPO(po){
     tbody.onclick = (e)=>{ const i = e.target.dataset.delLine; if(i===undefined) return; if(!softConfirm(e.target)) return; currentOrder.items.splice(Number(i),1); renderCart(); };
   }
 
-  document.getElementById('addLine').onclick = ()=>{
+  const addLineBtn = document.getElementById('addLine');
+  if (addLineBtn) {
+    addLineBtn.onclick = ()=>{
     const pid = sellProduct.value; if(!pid) return alert('اختر المنتج');
     const qty = Number(sellQty.value)||0; if(qty<=0) return alert('أدخل كمية صحيحة');
     const up = Number(sellPrice.value)||0; if(up<0) return alert('سعر غير صحيح');
     currentOrder.items.push({ productId: pid, qty, unitPrice: up, discountType: lineDiscType.value, discountValue: Number(lineDiscVal.value)||0 });
     renderCart();
   };
+  }
 
-  document.getElementById('saveOrder').onclick = ()=>{
+  const saveOrderBtn = document.getElementById('saveOrder');
+  if (saveOrderBtn) {
+    saveOrderBtn.onclick = ()=>{
     if(currentOrder.items.length===0) return alert(getTranslation(getUISettings().language, 'emptyCartAlert'));
     const stats = calcStats();
     for(const it of currentOrder.items){
@@ -2022,6 +2048,7 @@ function printPurchaseByPO(po){
     renderSales(); renderReports();
     alert(getTranslation(getUISettings().language, 'orderSaved'));
   };
+  }
 
   function renderOrdersList(){
     const tbody = document.querySelector('#ordersTable tbody'); if(!tbody) return; tbody.innerHTML='';
@@ -2105,9 +2132,9 @@ function printPurchaseByPO(po){
           <thead><tr><th>المنتج</th><th>الكمية</th><th>سعر الوحدة</th><th>خصم</th><th>الإجمالي</th></tr></thead>
           <tbody>${rows}</tbody>
           <tfoot>
-            <tr><th colspan="4" style="text-align:left">الإجمالي الفرعي</th><th>${fmt(sub)} AED</th></tr>
-            <tr><th colspan="4" style="text-align:left">رسوم التوصيل</th><th>${fmt(del)} AED</th></tr>
-            <tr><th colspan="4" style="text-align:left">الإجمالي الكلي</th><th>${fmt(total)} AED</th></tr>
+            <tr><th colspan="4" style="text-align:right">الإجمالي الفرعي</th><th>${fmt(sub)} AED</th></tr>
+            <tr><th colspan="4" style="text-align:right">رسوم التوصيل</th><th>${fmt(del)} AED</th></tr>
+            <tr><th colspan="4" style="text-align:right">الإجمالي الكلي</th><th>${fmt(total)} AED</th></tr>
           </tfoot>
         </table>
         <div style="margin-top:16px">
@@ -2273,19 +2300,42 @@ function printPurchaseByPO(po){
   // ====== Settings ======
   const lowStockThreshold = document.getElementById('lowStockThreshold');
   function renderSettings(){ if(lowStockThreshold) lowStockThreshold.value = db.settings.lowStockThreshold; }
-  document.getElementById('saveSettings').onclick = ()=>{ db.settings.lowStockThreshold = Number(lowStockThreshold.value)||0; try{ recordAudit('edit','settings','', 'lowStockThreshold='+db.settings.lowStockThreshold);}catch{} saveDB(db); alert(getTranslation(getUISettings().language, 'settingsSaved')); refreshAll(); };
+  const saveSettingsBtn = document.getElementById('saveSettings');
+  if (saveSettingsBtn) {
+    saveSettingsBtn.onclick = ()=>{ 
+      db.settings.lowStockThreshold = Number(lowStockThreshold.value)||0; 
+      try{ recordAudit('edit','settings','', 'lowStockThreshold='+db.settings.lowStockThreshold);}catch{} 
+      saveDB(db); 
+      alert(getTranslation(getUISettings().language, 'settingsSaved')); 
+      refreshAll(); 
+    };
+  }
 
   // ====== Backup / Restore / Reset ======
-  document.getElementById('btnBackup').onclick = ()=>{
-    const blob = new Blob([JSON.stringify(db,null,2)], {type:'application/json'});
-    const a = document.createElement('a'); a.href = URL.createObjectURL(blob); a.download = 'mini-store-backup.json'; document.body.appendChild(a); a.click(); document.body.removeChild(a); URL.revokeObjectURL(a.href);
-  };
-  document.getElementById('btnRestore').onclick = ()=> document.getElementById('restoreFile').click();
-  document.getElementById('restoreFile').onchange = (e)=>{
-    const file = e.target.files[0]; if(!file) return;
-    const reader = new FileReader(); reader.onload = ()=>{ try{ db = JSON.parse(reader.result); saveDB(db); refreshAll(); alert(getTranslation(getUISettings().language, 'backupRestored')); }catch{ alert(getTranslation(getUISettings().language, 'invalidFile')); } }; reader.readAsText(file);
-    e.target.value='';
-  };
+  const btnBackup = document.getElementById('btnBackup');
+  if (btnBackup) {
+    btnBackup.onclick = ()=>{
+      const blob = new Blob([JSON.stringify(db,null,2)], {type:'application/json'});
+      const a = document.createElement('a'); a.href = URL.createObjectURL(blob); a.download = 'mini-store-backup.json'; document.body.appendChild(a); a.click(); document.body.removeChild(a); URL.revokeObjectURL(a.href);
+    };
+  }
+  
+  const btnRestore = document.getElementById('btnRestore');
+  if (btnRestore) {
+    btnRestore.onclick = ()=> {
+      const restoreFile = document.getElementById('restoreFile');
+      if (restoreFile) restoreFile.click();
+    };
+  }
+  
+  const restoreFile = document.getElementById('restoreFile');
+  if (restoreFile) {
+    restoreFile.onchange = (e)=>{
+      const file = e.target.files[0]; if(!file) return;
+      const reader = new FileReader(); reader.onload = ()=>{ try{ db = JSON.parse(reader.result); saveDB(db); refreshAll(); alert(getTranslation(getUISettings().language, 'backupRestored')); }catch{ alert(getTranslation(getUISettings().language, 'invalidFile')); } }; reader.readAsText(file);
+      e.target.value='';
+    };
+  }
   const btnResetEl = document.getElementById('btnReset');
   btnResetEl.onclick = ()=>{
     if(!softConfirm(btnResetEl,'تأكيد إعادة؟')) return;
@@ -2446,7 +2496,8 @@ async function confirmDeleteUniversal(module, id, name = '', extraQty = '') {
     const elementsWithI18n = authBody.querySelectorAll('[data-i18n], [data-i18n-placeholder], [data-i18n-title], [data-i18n-aria], [data-i18n-alt]');
     elementsWithI18n.forEach(element => translateElement(element, lang));
     
-    document.getElementById('doLogin').onclick = doLogin;
+    const doLoginBtn = document.getElementById('doLogin');
+    if (doLoginBtn) doLoginBtn.onclick = doLogin;
   }
 
   function renderCreate(){
@@ -2466,13 +2517,19 @@ async function confirmDeleteUniversal(module, id, name = '', extraQty = '') {
     const elementsWithI18n = authBody.querySelectorAll('[data-i18n], [data-i18n-placeholder], [data-i18n-title], [data-i18n-aria], [data-i18n-alt]');
     elementsWithI18n.forEach(element => translateElement(element, lang));
     
-    document.getElementById('doCreate').onclick = doCreate;
+    const doCreateBtn = document.getElementById('doCreate');
+    if (doCreateBtn) doCreateBtn.onclick = doCreate;
   }
 
   async function doCreate(){
-    const u = document.getElementById('regUser').value.trim();
-    const p1 = document.getElementById('regPass').value;
-    const p2 = document.getElementById('regPass2').value;
+    const regUserEl = document.getElementById('regUser');
+    const regPassEl = document.getElementById('regPass');
+    const regPass2El = document.getElementById('regPass2');
+    
+    const u = regUserEl?.value?.trim() || '';
+    const p1 = regPassEl?.value || '';
+    const p2 = regPass2El?.value || '';
+    
     if(!u || !p1) return alert(getTranslation(getUISettings().language, 'enterUsernamePassword'));
     if(p1 !== p2) return alert(getTranslation(getUISettings().language, 'passwordConfirmMismatch'));
     const users = loadUsers();
@@ -2486,8 +2543,14 @@ async function confirmDeleteUniversal(module, id, name = '', extraQty = '') {
   }
 
   async function doLogin(){
-    const u = document.getElementById('loginUser').value.trim();
-    const p = document.getElementById('loginPass').value;
+    const loginUserEl = document.getElementById('loginUser');
+    const loginPassEl = document.getElementById('loginPass');
+    
+    const u = loginUserEl?.value?.trim() || '';
+    const p = loginPassEl?.value || '';
+    
+    if (!u || !p) return alert(getTranslation(getUISettings().language, 'enterUsernamePassword'));
+    
     const users = loadUsers();
     const rec = users.find(x=>x.username.toLowerCase()===u.toLowerCase());
     if(!rec) return alert(getTranslation(getUISettings().language, 'invalidCredentials'));
@@ -2509,11 +2572,17 @@ async function confirmDeleteUniversal(module, id, name = '', extraQty = '') {
     activateTab(getLastTab());
   }
 
-  // ====== Change password ======
-  document.getElementById('btnChangePass').onclick = async ()=>{
-    const cur = document.getElementById('curPass').value;
-    const n1 = document.getElementById('newPass').value;
-    const n2 = document.getElementById('newPass2').value;
+  const btnChangePass = document.getElementById('btnChangePass');
+  if (btnChangePass) {
+    btnChangePass.onclick = async ()=>{
+    const curPassEl = document.getElementById('curPass');
+    const newPassEl = document.getElementById('newPass');
+    const newPass2El = document.getElementById('newPass2');
+    
+    const cur = curPassEl?.value || '';
+    const n1 = newPassEl?.value || '';
+    const n2 = newPass2El?.value || '';
+    
     if(!n1 || n1 !== n2) return alert(getTranslation(getUISettings().language, 'passwordMismatch'));
     const users = loadUsers();
     const rec = users.find(x=>x.username===currentUser);
@@ -2524,8 +2593,13 @@ async function confirmDeleteUniversal(module, id, name = '', extraQty = '') {
     rec.hash = await sha256(n1 + rec.salt);
     saveUsers(users);
     alert(getTranslation(getUISettings().language, 'passwordChanged'));
-    document.getElementById('curPass').value = document.getElementById('newPass').value = document.getElementById('newPass2').value = '';
+    
+    // Clear password fields safely
+    if (curPassEl) curPassEl.value = '';
+    if (newPassEl) newPassEl.value = '';
+    if (newPass2El) newPass2El.value = '';
   };
+  }
 
   // ====== General Settings Event Handlers ======
   // Language change
