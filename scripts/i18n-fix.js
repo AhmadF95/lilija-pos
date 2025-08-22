@@ -51,7 +51,12 @@
     document.querySelectorAll('[data-i18n]').forEach(function (el) {
       var key = el.getAttribute('data-i18n');
       if (!key) return;
-      el.textContent = t(key);
+      if (el.tagName.toLowerCase() === 'option') {
+        // Special handling for option elements
+        el.textContent = t(key);
+      } else {
+        el.textContent = t(key);
+      }
     });
     document.querySelectorAll('[data-i18n-placeholder]').forEach(function (el) {
       var key = el.getAttribute('data-i18n-placeholder');
@@ -62,6 +67,11 @@
       var key = el.getAttribute('data-i18n-value');
       if (!key) return;
       try { el.value = t(key); } catch (e) { el.setAttribute('value', t(key)); }
+    });
+    document.querySelectorAll('[data-i18n-title]').forEach(function (el) {
+      var key = el.getAttribute('data-i18n-title');
+      if (!key) return;
+      try { el.title = t(key); } catch (e) { el.setAttribute('title', t(key)); }
     });
   }
 

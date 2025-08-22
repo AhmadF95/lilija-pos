@@ -1398,8 +1398,16 @@ function nextPo(){
       // Use getTranslation function with the i18nKey, fallback to built-in i18n, then to label
       b.textContent = getTranslation(lang, t.i18nKey) || i18n[lang][t.id] || t.label;
       b.dataset.tab = t.id;
+      if (t.i18nKey) {
+        b.setAttribute('data-i18n', t.i18nKey);
+      }
       tabsEl.appendChild(b);
     });
+    
+    // Apply i18n patch to handle any data-i18n attributes including tabs
+    if (typeof window.__posI18nApply === 'function') {
+      setTimeout(() => window.__posI18nApply(), 50);
+    }
   }
 
   function updateGeneralSettingsLabels() {
@@ -2622,6 +2630,9 @@ async function confirmDeleteUniversal(module, id, name = '', extraQty = '') {
   <!-- i18n translation files -->
   <script src="i18n/en.js"></script>
   <script src="i18n/ar.js"></script>
+  <!-- i18n additional translations -->
+  <script src="i18n/en.additions.js"></script>
+  <script src="i18n/ar.additions.js"></script>
   
   <!-- LILIJA modules -->
   <script src="modules/utils.js"></script>
