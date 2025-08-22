@@ -1,5 +1,4 @@
-// Runtime i18n patch for Settings & Reports
-// Loads the existing window.posLang if available, otherwise attempts to read from localStorage.
+// Runtime i18n patch (selector-based, no HTML changes required)
 (function () {
   function getLang() {
     if (window.pos && window.pos.lang) return window.pos.lang;
@@ -11,7 +10,6 @@
     var lang = getLang();
     if (lang === 'ar' && window.I18N_AR && window.I18N_AR[key]) return window.I18N_AR[key];
     if ((lang === 'en' || !lang) && window.I18N_EN && window.I18N_EN[key]) return window.I18N_EN[key];
-    // fallback check both
     if (window.I18N_EN && window.I18N_EN[key]) return window.I18N_EN[key];
     if (window.I18N_AR && window.I18N_AR[key]) return window.I18N_AR[key];
     return '';
@@ -22,19 +20,51 @@
     if (el) el.textContent = t(key);
   }
 
-  function replaceIfSelectorValue(sel, key) {
+  function replaceIfSelectorAttr(sel, attr, key) {
     var el = document.querySelector(sel);
-    if (el) el.value = t(key);
+    if (!el) return;
+    try { el.setAttribute(attr, t(key)); } catch (e) { el[attr] = t(key); }
+  }
+
+  function replaceByText(originalText, key) {
+    if (!originalText) return;
+    var nodes = document.querySelectorAll('body *:not(script):not(style)');
+    for (var i = 0; i < nodes.length; i++) {
+      var el = nodes[i];
+      if (el.children.length === 0) {
+        var txt = el.textContent ? el.textContent.trim() : '';
+        if (txt === originalText) {
+          el.textContent = t(key);
+        }
+      }
+    }
+  }
+
+  function applyDataAttributes() {
+    document.querySelectorAll('[data-i18n]').forEach(function (el) {
+      var key = el.getAttribute('data-i18n');
+      if (!key) return;
+      el.textContent = t(key);
+    });
+    document.querySelectorAll('[data-i18n-placeholder]').forEach(function (el) {
+      var key = el.getAttribute('data-i18n-placeholder');
+      if (!key) return;
+      try { el.placeholder = t(key); } catch (e) { el.setAttribute('placeholder', t(key)); }
+    });
+    document.querySelectorAll('[data-i18n-value]').forEach(function (el) {
+      var key = el.getAttribute('data-i18n-value');
+      if (!key) return;
+      try { el.value = t(key); } catch (e) { el.setAttribute('value', t(key)); }
+    });
   }
 
   function runPatch() {
-    // Settings
     replaceIfSelector('.settings-title', 'settingsTitle');
     replaceIfSelector('#lowStockLabel', 'lowStockThresholdLabel');
     replaceIfSelector('#lowStockHint', 'lowStockHint');
     replaceIfSelector('#saveSettingsBtn', 'saveSettingsBtn');
+    replaceIfSelectorAttr('#saveSettingsBtn', 'value', 'saveSettingsBtn');
 
-    // Password section
     replaceIfSelector('#settings-password h3', 'passwordSectionTitle');
     replaceIfSelector('label[for="currentPassword"]', 'currentPasswordLabel');
     var cp = document.querySelector('#currentPassword'); if (cp) cp.placeholder = t('currentPasswordPlaceholder');
@@ -45,14 +75,12 @@
     replaceIfSelector('#btnChangePassword', 'btnChangePassword');
     replaceIfSelector('#passwordHint', 'passwordHint');
 
-    // Reports KPIs (common selectors used in the app)
     replaceIfSelector('.kpi-inventory .kpi-label', 'kpiInventoryValue');
     replaceIfSelector('.kpi-sales .kpi-label', 'kpiSalesRevenue');
     replaceIfSelector('.kpi-delivery .kpi-label', 'kpiDeliveryRevenue');
     replaceIfSelector('.kpi-cogs .kpi-label', 'kpiCOGS');
-    replaceIfSelector('.kki-profit .kpi-label', 'kpiProfit');
+    replaceIfSelector('.kpi-profit .kpi-label', 'kpiProfit');
 
-    // Color swatches labels (if present)
     var mapping = [
       {sel: '.swatch-cyan .swatch-label', key: 'colorCyan'},
       {sel: '.swatch-neon-green .swatch-label', key: 'colorNeonGreen'},
@@ -61,15 +89,77 @@
       {sel: '.swatch-neon-orange .swatch-label', key: 'colorNeonOrange'}
     ];
     mapping.forEach(function(m) { replaceIfSelector(m.sel, m.key); });
+
+    var selectorMapping = [
+      {sel: 'h1.dashboard-title', key: 'dashboardTitle'},
+      {sel: '.dashboard h1', key: 'dashboardTitle'},
+      {sel: '.dashboard-title', key: 'dashboardTitle'},
+      {sel: '.report-period-label', key: 'reportPeriodLabel'},
+      {sel: '.report-controls .report-period', key: 'reportPeriodLabel'},
+      {sel: '.period-btn.today', key: 'today'},
+      {sel: '.period-btn.this-week', key: 'thisWeek'},
+      {sel: '.period-btn.this-month', key: 'thisMonth'},
+      {sel: '.period-btn.custom', key: 'customPeriod'},
+      {sel: '.kpi-sales .kpi-label', key: 'kpiSalesRevenue'},
+      {sel: '.kpi-cogs .kpi-label', key: 'kpiCOGS'},
+      {sel: '.kpi-profit .kpi-label', key: 'kpiProfit'},
+      {sel: '.kpi-inventory .kpi-label', key: 'kpiInventoryValue'},
+      {sel: '.data-type-label', key: 'dataTypeLabel'},
+      {sel: '.chart-type-label', key: 'chartTypeLabel'},
+      {sel: '.purchases-table thead th:nth-child(1)', key: 'purchasesProduct'},
+      {sel: '.purchases-table thead th:nth-child(2)', key: 'purchasesQuantity'},
+      {sel: '.purchases-table thead th:nth-child(3)', key: 'purchasesUnitCost'},
+      {sel: '.purchases-table thead th:nth-child(4)', key: 'purchasesTotal'},
+      {sel: '.purchases-table tfoot td[colspan="3"]', key: 'grandTotalLabel'}
+    ];
+    selectorMapping.forEach(function(m) { replaceIfSelector(m.sel, m.key); });
+
+    var textMapping = [
+      {text: 'Dashboard', key: 'dashboardTitle'},
+      {text: 'Report Period', key: 'reportPeriodLabel'},
+      {text: 'Today', key: 'today'},
+      {text: 'This Week', key: 'thisWeek'},
+      {text: 'This Month', key: 'thisMonth'},
+      {text: 'Custom Period', key: 'customPeriod'},
+      {text: 'Sales revenue', key: 'kpiSalesRevenue'},
+      {text: 'Cost of goods sold', key: 'kpiCOGS'},
+      {text: 'Profit', key: 'kpiProfit'},
+      {text: 'Inventory value', key: 'kpiInventoryValue'},
+      {text: 'Data type', key: 'dataTypeLabel'},
+      {text: 'Sales', key: 'salesLabel'},
+      {text: 'Chart type', key: 'chartTypeLabel'},
+      {text: 'Line', key: 'line'},
+      {text: 'Daily summary', key: 'dailySummaryTitle'},
+      {text: 'Export (Excel)', key: 'exportExcel'},
+      {text: 'Date', key: 'tableDate'},
+      {text: 'Total sales', key: 'tableTotalSales'},
+      {text: 'Total purchases', key: 'tableTotalPurchases'},
+      {text: 'Product', key: 'purchasesProduct'},
+      {text: 'Quantity', key: 'purchasesQuantity'},
+      {text: 'Unit Cost', key: 'purchasesUnitCost'},
+      {text: 'Total', key: 'purchasesTotal'},
+      {text: 'Grand total', key: 'grandTotalLabel'}
+    ];
+    textMapping.forEach(function(m) { replaceByText(m.text, m.key); });
+
+    applyDataAttributes();
   }
 
-  // Run on DOMContentLoaded and also after a short delay in case the settings section is injected dynamically
+  function runWithRetries(retries, delay) {
+    var attempts = 0;
+    function attempt() {
+      try { runPatch(); } catch (e) { }
+      attempts++;
+      if (attempts < retries) setTimeout(attempt, delay);
+    }
+    attempt();
+  }
+
   if (document.readyState === 'loading') {
-    document.addEventListener('DOMContentLoaded', function () { setTimeout(runPatch, 150); });
+    document.addEventListener('DOMContentLoaded', function () { runWithRetries(12, 250); });
   } else {
-    setTimeout(runPatch, 50);
+    runWithRetries(12, 250);
   }
 
-  // Expose a helper so other dynamic insertion code can call translateElement-like behaviour
   window.__posI18nApply = runPatch;
 })();
