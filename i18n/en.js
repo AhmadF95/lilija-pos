@@ -283,5 +283,9 @@ window.I18N_EN = {
   thAvailable: "Available",
   thStatus: "Status",
   thQuantitySold: "Quantity Sold",
-  thRevenue: "Revenue"
+  thRevenue: "Revenue",
+  
+  // Error messages
+  popupBlockedAlert: "Popup was blocked. Please allow popups for this site and try again.",
+  invoiceError: "Error generating invoice. Please try again."
 };
