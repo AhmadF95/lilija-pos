@@ -253,18 +253,16 @@
     const searchInput = panel.querySelector('#auditSearch');
     const currentSearchTerm = searchInput ? searchInput.value || '' : '';
     
-    // Only re-filter if search term changed
-    if (auditUIState.lastSearchTerm !== currentSearchTerm) {
-      applyFiltering(currentSearchTerm);
-      
-      // Auto-enable lazy mode if filtered results > 2000
-      const lazyToggle = panel.querySelector('#auditLazyToggle');
-      if (auditUIState.totalFiltered > 2000 && auditUIState.mode !== 'lazy') {
-        resetUIState('lazy');
-        if (lazyToggle) lazyToggle.checked = true;
-      } else {
-        resetUIState(); // Reset pagination state
-      }
+    // Always apply filtering to ensure filtered data is current
+    applyFiltering(currentSearchTerm);
+    
+    // Auto-enable lazy mode if filtered results > 2000
+    const lazyToggle = panel.querySelector('#auditLazyToggle');
+    if (auditUIState.totalFiltered > 2000 && auditUIState.mode !== 'lazy') {
+      resetUIState('lazy');
+      if (lazyToggle) lazyToggle.checked = true;
+    } else {
+      resetUIState(); // Reset pagination state
     }
     
     updateDisplay();
