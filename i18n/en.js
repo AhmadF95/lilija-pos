@@ -7,8 +7,6 @@ window.I18N_EN = {
   modulesLoaded: "Modules loaded: log/users",
   currentUser: "User:",
   btnLogout: "🚪 Logout",
-  btnBackup: "⬇️ Download Backup",
-  btnRestore: "⬆️ Restore",
   btnReset: "♻️ Reset",
   
   // Auth
@@ -225,7 +223,6 @@ window.I18N_EN = {
   // Success messages
   orderSaved: "Order saved successfully",
   settingsSaved: "Settings saved",
-  backupRestored: "Backup restored successfully",
   systemReset: "System reset successfully",
   accountCreated: "Account created successfully. You can now login.",
   
