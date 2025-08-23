@@ -1973,22 +1973,6 @@ if (btnPrintDraft && !btnPrintDraft.__bound){
 }
 
 
-  // 5) حذف شراء (كما عملتَ سابقًا)
-  tbody.onclick = async (e) => {
-    if (e.target.dataset.del) {
-      const id = e.target.dataset.del;
-      const rec = db.purchases.find(x => x.id === id);
-      const pn = (db.products.find(x => x.id === rec.productId)?.name) || '';
-      const res = await confirmDeleteUniversal('purchases', id, pn, rec.qty);
-      if (!res.ok) return;
-      db.purchases = db.purchases.filter(x => x.id !== id);
-      saveDB(db); refreshAll();
-      // اختياري بعد increment nextPo + refreshAll()
-const poPrev = document.getElementById('poPreview');
-if (poPrev) poPrev.textContent = '#' + (db.counters?.nextPo ?? 1001);
-      return;
-    }
-  };
 }
     
 // مسودة فاتورة المشتريات (PO draft)
@@ -2068,7 +2052,7 @@ function printPurchaseByPO(po){
       return alert(getTranslation(getUISettings().language, 'orderNotFoundAlert') || 'PO number is required');
     }
     
-    const list = (db.purchases||[]).filter(r=>r.po === po);
+    const list = (db.purchases||[]).filter(r=>r.po == po);
     if(list.length===0) {
       return alert(getTranslation(getUISettings().language, 'orderNotFoundAlert') || 'لا توجد فاتورة بهذا الرقم');
     }
