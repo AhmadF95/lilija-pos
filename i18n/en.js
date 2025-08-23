@@ -283,5 +283,36 @@ window.I18N_EN = {
   thAvailable: "Available",
   thStatus: "Status",
   thQuantitySold: "Quantity Sold",
-  thRevenue: "Revenue"
+  thRevenue: "Revenue",
+  
+  // Product editing prompts
+  promptEditProductName: "Product Name",
+  promptEditSKU: "SKU",
+  promptEditCategory: "Category",
+  promptEditPrice: "Selling Price",
+  
+  // Validation alerts
+  enterQuantity: "Enter quantity",
+  enterValidCost: "Enter valid cost",
+  enterValidQuantity: "Enter valid quantity",
+  selectProduct: "Select product",
+  invalidPrice: "Invalid price",
+  
+  // Receipt labels
+  receiptTitle: "Receipt",
+  receiptDate: "Date:",
+  receiptCustomerName: "Customer Name:",
+  receiptCustomerPhone: "Phone Number:",
+  receiptProduct: "Product",
+  receiptQuantity: "Quantity",
+  receiptUnitPrice: "Unit Price",
+  receiptDiscount: "Discount",
+  receiptTotal: "Total",
+  receiptSubtotal: "Subtotal",
+  receiptDelivery: "Delivery Fee",
+  receiptGrandTotal: "Grand Total",
+  receiptPrintSave: "🖨️ Print / Save PDF",
+  
+  // Purchase order alerts
+  noInvoiceFound: "No invoice found with this number"
 };

@@ -283,5 +283,36 @@ window.I18N_AR = {
   thAvailable: "المتوفر",
   thStatus: "حالة",
   thQuantitySold: "الكمية المباعة",
-  thRevenue: "الإيراد"
+  thRevenue: "الإيراد",
+  
+  // Product editing prompts
+  promptEditProductName: "اسم المنتج",
+  promptEditSKU: "SKU",
+  promptEditCategory: "الفئة",
+  promptEditPrice: "سعر البيع",
+  
+  // Validation alerts
+  enterQuantity: "أدخل الكمية",
+  enterValidCost: "أدخل تكلفة صحيحة",
+  enterValidQuantity: "أدخل كمية صحيحة",
+  selectProduct: "اختر المنتج",
+  invalidPrice: "سعر غير صحيح",
+  
+  // Receipt labels
+  receiptTitle: "فاتورة",
+  receiptDate: "تاريخ:",
+  receiptCustomerName: "اسم العميل:",
+  receiptCustomerPhone: "رقم الهاتف:",
+  receiptProduct: "المنتج",
+  receiptQuantity: "الكمية",
+  receiptUnitPrice: "سعر الوحدة",
+  receiptDiscount: "خصم",
+  receiptTotal: "الإجمالي",
+  receiptSubtotal: "الإجمالي الفرعي",
+  receiptDelivery: "رسوم التوصيل",
+  receiptGrandTotal: "الإجمالي الكلي",
+  receiptPrintSave: "🖨️ طباعة / حفظ PDF",
+  
+  // Purchase order alerts
+  noInvoiceFound: "لا توجد فاتورة بهذا الرقم"
 };

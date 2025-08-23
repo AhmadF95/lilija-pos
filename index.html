@@ -369,17 +369,17 @@
         </div>
         
         <div class="g6">
-          <label id="shopNameLabel">🏪 اسم المتجر</label>
-          <input type="text" id="shopName" data-i18n-placeholder="shopNamePlaceholder" placeholder="اسم متجرك" />
-          <div class="hint" id="shopNameHint">سيظهر في رأس الصفحة</div>
+          <label id="shopNameLabel" data-i18n="shopNameLabel">🏪 Shop Name</label>
+          <input type="text" id="shopName" data-i18n-placeholder="shopNamePlaceholder" placeholder="Your shop name" />
+          <div class="hint" id="shopNameHint" data-i18n="shopNameHint">Will appear in the header</div>
           
-          <label id="shopLogoLabel">🖼️ شعار المتجر</label>
+          <label id="shopLogoLabel" data-i18n="shopLogoLabel">🖼️ Shop Logo</label>
           <input type="file" id="shopLogoFile" accept="image/*" />
           <div class="shop-logo-controls">
-            <button type="button" id="removeLogoBtn" class="btn-muted" style="display:none" id="removeLogoHint">🗑️ إزالة الشعار</button>
+            <button type="button" id="removeLogoBtn" class="btn-muted" style="display:none" data-i18n="removeLogoHint">🗑️ Remove Logo</button>
           </div>
-          <img id="shopLogoPreview" class="shop-logo-preview" style="display:none" data-i18n-alt="logoPreviewAlt" alt="معاينة الشعار" />
-          <div class="hint" id="shopLogoHint">اختر صورة لشعار متجرك (PNG, JPG)</div>
+          <img id="shopLogoPreview" class="shop-logo-preview" style="display:none" data-i18n-alt="logoPreviewAlt" alt="Logo Preview" />
+          <div class="hint" id="shopLogoHint" data-i18n="shopLogoHint">Choose an image for your shop logo (PNG, JPG)</div>
         </div>
       </div>
       
@@ -512,7 +512,7 @@
       btn.disabled = !canCreate;
       btn.onclick = async ()=>{
         if(!canCreate) return;
-        const uname = prompt('اسم المستخدم؟'); if(!uname) return;
+        const uname = prompt(getTranslation(getUISettings().language, 'promptUsername')); if(!uname) return;
         const pass1 = prompt('كلمة المرور؟'); if(!pass1) return;
         const list = loadUsers();
         if(list.length>=5) return alert(getTranslation(getUISettings().language, 'alertMaxUsers'));
@@ -1680,10 +1680,10 @@ function nextPo(){
       const p = db.products.find(x => x.id === id);
       if (!p) return;
 
-      const name  = prompt('اسم المنتج', p.name);    if (name  === null) return;
-      const sku   = prompt('SKU',        p.sku || ''); if (sku   === null) return;
-      const cat   = prompt('الفئة',      p.cat || ''); if (cat   === null) return;
-      const price = parseFloat(prompt('سعر البيع', p.price || 0));
+      const name  = prompt(getTranslation(getUISettings().language, 'promptEditProductName'), p.name);    if (name  === null) return;
+      const sku   = prompt(getTranslation(getUISettings().language, 'promptEditSKU'), p.sku || ''); if (sku   === null) return;
+      const cat   = prompt(getTranslation(getUISettings().language, 'promptEditCategory'), p.cat || ''); if (cat   === null) return;
+      const price = parseFloat(prompt(getTranslation(getUISettings().language, 'promptEditPrice'), p.price || 0));
       if (Number.isNaN(price)) return;
 
       // Check for duplicates using shared utilities (excluding current product)
@@ -1834,9 +1834,9 @@ if (addBtn && !addBtn.__boundDraft){
     const prodId = buyProduct.value;
     const qty  = Number(buyQty?.value)||0;
     const cost = Number(buyCost?.value)||0;
-    if(!prodId) return alert('اختر المنتج');
-    if(qty<=0)  return alert('أدخل الكمية');
-    if(cost<0)  return alert('أدخل تكلفة صحيحة');
+    if(!prodId) return alert(getTranslation(getUISettings().language, 'selectProduct'));
+    if(qty<=0)  return alert(getTranslation(getUISettings().language, 'enterQuantity'));
+    if(cost<0)  return alert(getTranslation(getUISettings().language, 'enterValidCost'));
 
     purchaseDraft.push({ productId: prodId, qty, unitCost: cost });
     // تفريغ الحقول الإدخالية
@@ -2009,7 +2009,7 @@ function printPurchaseDraft(){
 
 function printPurchaseByPO(po){
   const list = (db.purchases||[]).filter(r=>r.po === po);
-  if(list.length===0) return alert('لا توجد فاتورة بهذا الرقم');
+  if(list.length===0) return alert(getTranslation(getUISettings().language, 'noInvoiceFound'));
   const pmap = productMap();
   let rows = ''; let sub = 0; let sup=''; let tel='';
   list.forEach(r=>{
@@ -2075,9 +2075,9 @@ function printPurchaseByPO(po){
   const addLineBtn = document.getElementById('addLine');
   if (addLineBtn) {
     addLineBtn.onclick = ()=>{
-    const pid = sellProduct.value; if(!pid) return alert('اختر المنتج');
-    const qty = Number(sellQty.value)||0; if(qty<=0) return alert('أدخل كمية صحيحة');
-    const up = Number(sellPrice.value)||0; if(up<0) return alert('سعر غير صحيح');
+    const pid = sellProduct.value; if(!pid) return alert(getTranslation(getUISettings().language, 'selectProduct'));
+    const qty = Number(sellQty.value)||0; if(qty<=0) return alert(getTranslation(getUISettings().language, 'enterValidQuantity'));
+    const up = Number(sellPrice.value)||0; if(up<0) return alert(getTranslation(getUISettings().language, 'invalidPrice'));
     currentOrder.items.push({ productId: pid, qty, unitPrice: up, discountType: lineDiscType.value, discountValue: Number(lineDiscVal.value)||0 });
     renderCart();
   };
@@ -2165,37 +2165,39 @@ function printPurchaseByPO(po){
     }).join('');
     const del = Number(o.deliveryFee||0);
     const total = sub + del;
+    const uiSettings = getUISettings();
+    const lang = uiSettings.language;
     const win = window.open('', '_blank');
     win.document.write(`
-      <html lang="ar" dir="rtl">
+      <html lang="${lang === 'en' ? 'en' : 'ar'}" dir="${lang === 'en' ? 'ltr' : 'rtl'}">
       <head>
         <meta charset="UTF-8" />
-        <title>فاتورة</title>
+        <title>${getTranslation(lang, 'receiptTitle')}</title>
         <style>
           body{font-family:system-ui,Segoe UI,Roboto,Arial;padding:24px;color:#111}
           h2{margin:0 0 12px 0}
           table{width:100%;border-collapse:collapse;margin-top:10px}
-          th,td{border:1px solid #ccc;padding:8px;text-align:right}
+          th,td{border:1px solid #ccc;padding:8px;text-align:${lang === 'en' ? 'left' : 'right'}}
           tfoot th{background:#f7f7f7}
         </style>
       </head>
       <body>
-        <h2>فاتورة</h2>
-        <div>تاريخ: ${o.date||''}</div>
-        ${o.customerName ? `<div>اسم العميل: ${o.customerName}</div>` : ''}
-        ${o.customerPhone ? `<div>رقم الهاتف: ${o.customerPhone}</div>` : ''}
+        <h2>${getTranslation(lang, 'receiptTitle')}</h2>
+        <div>${getTranslation(lang, 'receiptDate')} ${o.date||''}</div>
+        ${o.customerName ? `<div>${getTranslation(lang, 'receiptCustomerName')} ${o.customerName}</div>` : ''}
+        ${o.customerPhone ? `<div>${getTranslation(lang, 'receiptCustomerPhone')} ${o.customerPhone}</div>` : ''}
         <hr/>
         <table>
-          <thead><tr><th>المنتج</th><th>الكمية</th><th>سعر الوحدة</th><th>خصم</th><th>الإجمالي</th></tr></thead>
+          <thead><tr><th>${getTranslation(lang, 'receiptProduct')}</th><th>${getTranslation(lang, 'receiptQuantity')}</th><th>${getTranslation(lang, 'receiptUnitPrice')}</th><th>${getTranslation(lang, 'receiptDiscount')}</th><th>${getTranslation(lang, 'receiptTotal')}</th></tr></thead>
           <tbody>${rows}</tbody>
           <tfoot>
-            <tr><th colspan="4" style="text-align:right">الإجمالي الفرعي</th><th>${fmt(sub)} AED</th></tr>
-            <tr><th colspan="4" style="text-align:right">رسوم التوصيل</th><th>${fmt(del)} AED</th></tr>
-            <tr><th colspan="4" style="text-align:right">الإجمالي الكلي</th><th>${fmt(total)} AED</th></tr>
+            <tr><th colspan="4" style="text-align:${lang === 'en' ? 'right' : 'right'}">${getTranslation(lang, 'receiptSubtotal')}</th><th>${fmt(sub)} AED</th></tr>
+            <tr><th colspan="4" style="text-align:${lang === 'en' ? 'right' : 'right'}">${getTranslation(lang, 'receiptDelivery')}</th><th>${fmt(del)} AED</th></tr>
+            <tr><th colspan="4" style="text-align:${lang === 'en' ? 'right' : 'right'}">${getTranslation(lang, 'receiptGrandTotal')}</th><th>${fmt(total)} AED</th></tr>
           </tfoot>
         </table>
         <div style="margin-top:16px">
-          <button onclick="window.print()">🖨️ طباعة / حفظ PDF</button>
+          <button onclick="window.print()">${getTranslation(lang, 'receiptPrintSave')}</button>
         </div>
       </body>
       </html>
