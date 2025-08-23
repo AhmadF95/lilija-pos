@@ -161,7 +161,7 @@
             <thead>
               <tr>
                 <th data-i18n="thTime">${safeGetTranslation(lang, 'thTime', 'Time')}</th><th data-i18n="thUser">${safeGetTranslation(lang, 'thUser', 'User')}</th><th data-i18n="thModule">${safeGetTranslation(lang, 'thModule', 'Module')}</th>
-                <th data-i18n="thAction">${safeGetTranslation(lang, 'thAction', 'Action')}</th><th data-i18n="thRefId">${safeGetTranslation(lang, 'thRefId', 'Ref ID')}</th><th data-i18n="thDetails">${safeGetTranslation(lang, 'thDetails', 'Details')}</th><th data-i18n="thQty">${safeGetTranslation(lang, 'thQty', 'Qty')}</th>
+                <th data-i18n="thAction">${safeGetTranslation(lang, 'thAction', 'Action')}</th><th data-i18n="thRefId">${safeGetTranslation(lang, 'thRefId', 'Ref ID')}</th><th data-i18n="thDetails">${safeGetTranslation(lang, 'thDetails', 'Details')}</th><th data-i18n="thQty">${safeGetTranslation(lang, 'thQty', 'Qty')}</th><th data-i18n="thViewDetails">${safeGetTranslation(lang, 'thViewDetails', 'View Details')}</th>
               </tr>
             </thead>
             <tbody></tbody>
@@ -268,76 +268,10 @@
     }
     
     updateDisplay();
-  };
-
-  // Update display based on current mode and state
-  function updateDisplay() {
-    const panel = document.querySelector('section.panel[data-tab="audit"]');
-    if (!panel) return;
-
-    const tbody = panel.querySelector('#auditTable tbody');
-    const statusDisplay = panel.querySelector('#auditStatusDisplay');
-    const paginationControls = panel.querySelector('#auditPaginationControls');
-    const lazyToggle = panel.querySelector('#auditLazyToggle');
     
-    if (!tbody) return;
-
-    // Show/hide pagination controls based on mode
-    if (paginationControls) {
-      paginationControls.style.display = auditUIState.mode === 'paged' ? 'flex' : 'none';
-    }
+    // Initialize modal handlers on first render
+    initializeModalHandlers();
     
-    // Sync lazy toggle with current mode
-    if (lazyToggle && lazyToggle.checked !== (auditUIState.mode === 'lazy')) {
-      lazyToggle.checked = auditUIState.mode === 'lazy';
-    }
-
-    let displayRows;
-    let statusText;
-    
-    if (auditUIState.mode === 'paged') {
-      // Paged mode
-      displayRows = getCurrentPageData();
-      const totalPages = Math.ceil(auditUIState.totalFiltered / auditUIState.pageSize);
-      const startItem = auditUIState.totalFiltered > 0 ? ((auditUIState.currentPage - 1) * auditUIState.pageSize) + 1 : 0;
-      const endItem = Math.min(auditUIState.currentPage * auditUIState.pageSize, auditUIState.totalFiltered);
-      
-      statusText = `${startItem}–${endItem} / ${auditUIState.totalFiltered}`;
-      
-      // Update pagination button states
-      const prevButton = panel.querySelector('#auditPrevPage');
-      const nextButton = panel.querySelector('#auditNextPage');
-      if (prevButton) prevButton.disabled = auditUIState.currentPage === 1;
-      if (nextButton) nextButton.disabled = auditUIState.currentPage >= totalPages;
-      
-    } else {
-      // Lazy mode - initialize loadedCount if needed
-      if (auditUIState.loadedCount === 0 && auditUIState.totalFiltered > 0) {
-        auditUIState.loadedCount = Math.min(CHUNK_SIZE, auditUIState.totalFiltered);
-      }
-      
-      displayRows = getLazyModeData();
-      statusText = `Loaded ${auditUIState.loadedCount} / ${auditUIState.totalFiltered}`;
-    }
-
-    // Render table rows
-    tbody.innerHTML = displayRows.map(r => `
-      <tr>
-        <td>${r.ts || ''}</td>
-        <td>${r.user || ''}</td>
-        <td>${r.module || ''}</td>
-        <td>${r.action || ''}</td>
-        <td>${r.refId || ''}</td>
-        <td>${r.details || ''}</td>
-        <td>${r.qty || ''}</td>
-      </tr>`).join('');
-
-    // Update status display
-    if (statusDisplay) {
-      statusDisplay.textContent = statusText;
-    }
-  }
-
     // تصدير CSV with scope selection
     const btnExp = panel.querySelector('#btnAuditExport');
     if (btnExp) btnExp.onclick = () => {
@@ -403,7 +337,7 @@
       a.click();
       URL.revokeObjectURL(url);
     };
-
+    
     // مسح السجل
     const btnClr = panel.querySelector('#btnAuditClear');
     if (btnClr) btnClr.onclick = () => {
@@ -420,6 +354,158 @@
       resetUIState();
       renderAudit();
     };
+  };
+
+  // Update display based on current mode and state
+  function updateDisplay() {
+    const panel = document.querySelector('section.panel[data-tab="audit"]');
+    if (!panel) return;
+
+    const tbody = panel.querySelector('#auditTable tbody');
+    const statusDisplay = panel.querySelector('#auditStatusDisplay');
+    const paginationControls = panel.querySelector('#auditPaginationControls');
+    const lazyToggle = panel.querySelector('#auditLazyToggle');
+    
+    if (!tbody) return;
+
+    // Show/hide pagination controls based on mode
+    if (paginationControls) {
+      paginationControls.style.display = auditUIState.mode === 'paged' ? 'flex' : 'none';
+    }
+    
+    // Sync lazy toggle with current mode
+    if (lazyToggle && lazyToggle.checked !== (auditUIState.mode === 'lazy')) {
+      lazyToggle.checked = auditUIState.mode === 'lazy';
+    }
+
+    let displayRows;
+    let statusText;
+    
+    if (auditUIState.mode === 'paged') {
+      // Paged mode
+      displayRows = getCurrentPageData();
+      const totalPages = Math.ceil(auditUIState.totalFiltered / auditUIState.pageSize);
+      const startItem = auditUIState.totalFiltered > 0 ? ((auditUIState.currentPage - 1) * auditUIState.pageSize) + 1 : 0;
+      const endItem = Math.min(auditUIState.currentPage * auditUIState.pageSize, auditUIState.totalFiltered);
+      
+      statusText = `${startItem}–${endItem} / ${auditUIState.totalFiltered}`;
+      
+      // Update pagination button states
+      const prevButton = panel.querySelector('#auditPrevPage');
+      const nextButton = panel.querySelector('#auditNextPage');
+      if (prevButton) prevButton.disabled = auditUIState.currentPage === 1;
+      if (nextButton) nextButton.disabled = auditUIState.currentPage >= totalPages;
+      
+    } else {
+      // Lazy mode - initialize loadedCount if needed
+      if (auditUIState.loadedCount === 0 && auditUIState.totalFiltered > 0) {
+        auditUIState.loadedCount = Math.min(CHUNK_SIZE, auditUIState.totalFiltered);
+      }
+      
+      displayRows = getLazyModeData();
+      statusText = `Loaded ${auditUIState.loadedCount} / ${auditUIState.totalFiltered}`;
+    }
+
+    // Render table rows
+    tbody.innerHTML = displayRows.map((r, index) => `
+      <tr>
+        <td>${r.ts || ''}</td>
+        <td>${r.user || ''}</td>
+        <td>${r.module || ''}</td>
+        <td>${r.action || ''}</td>
+        <td>${r.refId || ''}</td>
+        <td>${r.details || ''}</td>
+        <td>${r.qty || ''}</td>
+        <td><button class="eye-icon-btn" data-record-index="${index}" title="عرض التفاصيل">👁️</button></td>
+      </tr>`).join('');
+
+    // Update status display
+    if (statusDisplay) {
+      statusDisplay.textContent = statusText;
+    }
+
+    // Add event listeners for eye icon buttons
+    const eyeButtons = tbody.querySelectorAll('.eye-icon-btn');
+    eyeButtons.forEach(btn => {
+      btn.addEventListener('click', (e) => {
+        e.preventDefault();
+        const recordIndex = parseInt(e.target.dataset.recordIndex);
+        const record = displayRows[recordIndex];
+        if (record) {
+          showAuditDetailsModal(record);
+        }
+      });
+    });
+  }
+
+  // Modal functionality
+  function showAuditDetailsModal(record) {
+    const modal = document.getElementById('auditDetailsModal');
+    const content = document.getElementById('auditDetailsContent');
+    if (!modal || !content) return;
+
+    const lang = getUISettings()?.language || 'en';
+    
+    // Build detailed view
+    const details = {
+      [safeGetTranslation(lang, 'thTime', 'Time')]: record.ts || '',
+      [safeGetTranslation(lang, 'thUser', 'User')]: record.user || '',
+      [safeGetTranslation(lang, 'thModule', 'Module')]: record.module || '',
+      [safeGetTranslation(lang, 'thAction', 'Action')]: record.action || '',
+      [safeGetTranslation(lang, 'thRefId', 'Ref ID')]: record.refId || '',
+      [safeGetTranslation(lang, 'thDetails', 'Details')]: record.details || '',
+      [safeGetTranslation(lang, 'thQuantity', 'Quantity')]: record.qty || ''
+    };
+
+    // Enhanced details for sales and purchases
+    if (record.module === 'sales' || record.module === 'purchases') {
+      try {
+        const parsedDetails = JSON.parse(record.details || '{}');
+        if (parsedDetails && typeof parsedDetails === 'object') {
+          Object.keys(parsedDetails).forEach(key => {
+            details[key] = parsedDetails[key];
+          });
+        }
+      } catch (e) {
+        // If parsing fails, keep original details
+      }
+    }
+
+    // Render details
+    content.innerHTML = Object.entries(details).map(([label, value]) => `
+      <div class="detail-row">
+        <div class="detail-label">${label}:</div>
+        <div class="detail-value">${value}</div>
+      </div>
+    `).join('');
+
+    modal.style.display = 'flex';
+  }
+
+  function hideAuditDetailsModal() {
+    const modal = document.getElementById('auditDetailsModal');
+    if (modal) {
+      modal.style.display = 'none';
+    }
+  }
+
+  // Initialize modal event listeners
+  function initializeModalHandlers() {
+    const modal = document.getElementById('auditDetailsModal');
+    const closeBtn = modal?.querySelector('.modal-close');
+    
+    if (closeBtn) {
+      closeBtn.addEventListener('click', hideAuditDetailsModal);
+    }
+    
+    if (modal) {
+      modal.addEventListener('click', (e) => {
+        if (e.target === modal) {
+          hideAuditDetailsModal();
+        }
+      });
+    }
+  }
 
   // Click handler for audit tab (redundant but kept for robustness)
   document.addEventListener('click', (e) => {
