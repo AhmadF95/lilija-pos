@@ -169,6 +169,10 @@ window.I18N_AR = {
   thAction: "الإجراء",
   thRefId: "المعرّف",
   thDetails: "الاسم/التفاصيل",
+  thViewDetails: "عرض التفاصيل",
+  viewDetailsTitle: "تفاصيل السجل",
+  closeModal: "إغلاق",
+  recordDetails: "تفاصيل السجل",
   thQty: "الكمية",
   
   // Users Admin section

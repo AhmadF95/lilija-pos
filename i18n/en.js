@@ -169,6 +169,10 @@ window.I18N_EN = {
   thAction: "Action",
   thRefId: "Ref ID",
   thDetails: "Name/Details",
+  thViewDetails: "View Details", 
+  viewDetailsTitle: "Record Details",
+  closeModal: "Close",
+  recordDetails: "Record Details",
   thQty: "Quantity",
   
   // Users Admin section
