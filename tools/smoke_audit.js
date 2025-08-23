@@ -11,11 +11,16 @@ const dom = new JSDOM(`<!doctype html><html><body>
 global.window = dom.window;
 global.document = dom.window.document;
 window.CURRENT_USER = 'tester';
+window.currentUser = 'test-user';
 window.can = () => true;
 window.alert = () => {};
 window.confirm = () => true;
 window.uid = () => 'id';
 window.saveDB = () => {};
+window.getUISettings = () => ({ language: 'en' });
+window.getTranslation = (lang, key, fallback) => fallback || key;
+global.getUISettings = () => ({ language: 'en' });
+global.getTranslation = (lang, key, fallback) => fallback || key;
 
 const scriptPath = path.join(__dirname, '..', 'modules', 'audit_log.js');
 dom.window.eval(fs.readFileSync(scriptPath, 'utf8'));
