@@ -1827,36 +1827,54 @@ renderPurchaseDraft();
 
   // Add event handler for Invoice and Delete buttons
   tbody.onclick = async (e) => {
-    const invoiceBtn = e.target.closest('button[data-invoice]');
-    const deleteBtn = e.target.closest('button[data-del]');
-    
-    if (invoiceBtn) {
-      const purchaseId = invoiceBtn.dataset.invoice;
-      const po = invoiceBtn.dataset.po;
+    try {
+      console.log('Purchase table click event triggered on:', e.target.tagName, e.target.className);
       
-      // If purchase has a PO number, use the existing PO-based function
-      if (po && po.trim()) {
-        printPurchaseByPO(po);
-      } else {
-        // Otherwise use individual purchase invoice function
-        printPurchaseInvoice(purchaseId);
+      const invoiceBtn = e.target.closest('button[data-invoice]');
+      const deleteBtn = e.target.closest('button[data-del]');
+      
+      if (invoiceBtn) {
+        console.log('Invoice button clicked');
+        const purchaseId = invoiceBtn.dataset.invoice;
+        const po = invoiceBtn.dataset.po;
+        
+        console.log('Invoice button data - Purchase ID:', purchaseId, 'PO:', po);
+        
+        // Validate required data
+        if (!purchaseId) {
+          alert(getTranslation(getUISettings().language, 'orderNotFoundAlert') || 'Invalid purchase data');
+          return;
+        }
+        
+        // If purchase has a PO number, use the existing PO-based function
+        if (po && po.trim()) {
+          console.log('Using PO-based invoice for PO:', po);
+          printPurchaseByPO(po);
+        } else {
+          console.log('Using individual purchase invoice for ID:', purchaseId);
+          // Otherwise use individual purchase invoice function
+          printPurchaseInvoice(purchaseId);
+        }
+        return;
       }
-      return;
-    }
-    
-    if (deleteBtn) {
-      const purchaseId = deleteBtn.dataset.del;
-      const purchase = db.purchases.find(x => x.id === purchaseId);
-      const productName = purchase ? (pmap.get(purchase.productId)?.name || 'Unknown Product') : 'Unknown Purchase';
       
-      const res = await confirmDeleteUniversal('purchases', purchaseId, productName);
-      if (!res.ok) return;
-      
-      db.purchases = db.purchases.filter(x => x.id !== purchaseId);
-      saveDB(db);
-      renderPurchases();
-      renderReports();
-      return;
+      if (deleteBtn) {
+        const purchaseId = deleteBtn.dataset.del;
+        const purchase = db.purchases.find(x => x.id === purchaseId);
+        const productName = purchase ? (pmap.get(purchase.productId)?.name || 'Unknown Product') : 'Unknown Purchase';
+        
+        const res = await confirmDeleteUniversal('purchases', purchaseId, productName);
+        if (!res.ok) return;
+        
+        db.purchases = db.purchases.filter(x => x.id !== purchaseId);
+        saveDB(db);
+        renderPurchases();
+        renderReports();
+        return;
+      }
+    } catch (error) {
+      console.error('Error in purchase table click handler:', error);
+      alert(getTranslation(getUISettings().language, 'invoiceError') || 'An error occurred. Please try again.');
     }
   };
 
@@ -2043,96 +2061,136 @@ function printPurchaseDraft(){
 }
 
 function printPurchaseByPO(po){
-  const list = (db.purchases||[]).filter(r=>r.po === po);
-  if(list.length===0) return alert('لا توجد فاتورة بهذا الرقم');
-  const pmap = productMap();
-  let rows = ''; let sub = 0; let sup=''; let tel='';
-  list.forEach(r=>{
-    const name = pmap.get(r.productId)?.name || '—';
-    const line = (Number(r.qty)||0)*(Number(r.unitCost)||0);
-    sub += line; rows += `<tr><td>${name}</td><td>${r.qty}</td><td>${(Number(r.unitCost)||0).toFixed(2)}</td><td>${line.toFixed(2)}</td></tr>`;
-    sup = r.supplier || sup; tel = r.supplierPhone || tel;
-  });
-  const w = window.open('', '_blank');
-  w.document.write(`
-    <html lang="ar" dir="rtl"><head><meta charset="utf-8"><title>PO #${po}</title>
-    <style>body{font-family:system-ui,Segoe UI,Roboto,Arial;padding:24px}table{width:100%;border-collapse:collapse}th,td{border:1px solid #ccc;padding:8px;text-align:right}</style>
-    </head><body>
-      <h2>فاتورة مشتريات #${po}</h2>
-      <div>المورّد: ${sup||'-'} &nbsp; | &nbsp; هاتف: ${tel||'-'}</div>
-      <hr>
-      <table><thead><tr><th>المنتج</th><th>الكمية</th><th>تكلفة الوحدة</th><th>الإجمالي</th></tr></thead>
-      <tbody>${rows}</tbody>
-      <tfoot><tr><th colspan="3" style="text-align:right">الإجمالي</th><th>${sub.toFixed(2)}</th></tr></tfoot>
-      </table>
-      <div style="margin-top:12px"><button onclick="window.print()">🖨️ طباعة / PDF</button></div>
-    </body></html>`);
-  w.document.close();
+  try {
+    console.log('printPurchaseByPO called with PO:', po);
+    
+    if (!po || po.trim() === '') {
+      return alert(getTranslation(getUISettings().language, 'orderNotFoundAlert') || 'PO number is required');
+    }
+    
+    const list = (db.purchases||[]).filter(r=>r.po === po);
+    if(list.length===0) {
+      return alert(getTranslation(getUISettings().language, 'orderNotFoundAlert') || 'لا توجد فاتورة بهذا الرقم');
+    }
+    
+    const pmap = productMap();
+    let rows = ''; let sub = 0; let sup=''; let tel='';
+    list.forEach(r=>{
+      const name = pmap.get(r.productId)?.name || '—';
+      const line = (Number(r.qty)||0)*(Number(r.unitCost)||0);
+      sub += line; rows += `<tr><td>${name}</td><td>${r.qty}</td><td>${(Number(r.unitCost)||0).toFixed(2)}</td><td>${line.toFixed(2)}</td></tr>`;
+      sup = r.supplier || sup; tel = r.supplierPhone || tel;
+    });
+    
+    const w = window.open('', '_blank');
+    if (!w || w.closed || typeof w.closed === 'undefined') {
+      alert(getTranslation(getUISettings().language, 'popupBlockedAlert') || 'Popup was blocked. Please allow popups for this site and try again.');
+      return;
+    }
+    
+    w.document.write(`
+      <html lang="ar" dir="rtl"><head><meta charset="utf-8"><title>PO #${po}</title>
+      <style>body{font-family:system-ui,Segoe UI,Roboto,Arial;padding:24px}table{width:100%;border-collapse:collapse}th,td{border:1px solid #ccc;padding:8px;text-align:right}</style>
+      </head><body>
+        <h2>فاتورة مشتريات #${po}</h2>
+        <div>المورّد: ${sup||'-'} &nbsp; | &nbsp; هاتف: ${tel||'-'}</div>
+        <hr>
+        <table><thead><tr><th>المنتج</th><th>الكمية</th><th>تكلفة الوحدة</th><th>الإجمالي</th></tr></thead>
+        <tbody>${rows}</tbody>
+        <tfoot><tr><th colspan="3" style="text-align:right">الإجمالي</th><th>${sub.toFixed(2)}</th></tr></tfoot>
+        </table>
+        <div style="margin-top:12px"><button onclick="window.print()">🖨️ طباعة / PDF</button></div>
+      </body></html>`);
+    w.document.close();
+    console.log('Invoice window opened successfully for PO:', po);
+  } catch (error) {
+    console.error('Error in printPurchaseByPO:', error);
+    alert(getTranslation(getUISettings().language, 'invoiceError') || 'Error generating invoice. Please try again.');
+  }
 }
 
 // Function to print invoice for individual purchase
 function printPurchaseInvoice(purchaseId) {
-  const purchase = db.purchases.find(r => r.id === purchaseId);
-  if (!purchase) return alert(getTranslation(getUISettings().language, 'orderNotFoundAlert') || 'Purchase not found');
-  
-  const pmap = productMap();
-  const productName = pmap.get(purchase.productId)?.name || '—';
-  const total = (Number(purchase.qty) || 0) * (Number(purchase.unitCost) || 0);
-  
-  const w = window.open('', '_blank');
-  const currentLang = getUISettings().language;
-  
-  w.document.write(`
-    <html lang="${currentLang === 'ar' ? 'ar' : 'en'}" dir="${currentLang === 'ar' ? 'rtl' : 'ltr'}">
-    <head>
-      <meta charset="utf-8">
-      <title>${getTranslation(currentLang, 'btnInvoice')} - ${productName}</title>
-      <style>
-        body{font-family:system-ui,Segoe UI,Roboto,Arial;padding:24px}
-        table{width:100%;border-collapse:collapse;margin-top:16px}
-        th,td{border:1px solid #ccc;padding:8px;text-align:${currentLang === 'ar' ? 'right' : 'left'}}
-        .header-info{margin-bottom:16px;padding:12px;border:1px solid #ddd;border-radius:6px;background:#f9f9f9}
-      </style>
-    </head>
-    <body>
-      <h2>${getTranslation(currentLang, 'btnInvoice')} - ${getTranslation(currentLang, 'purchasesTitle')}</h2>
-      <div class="header-info">
-        <div><strong>${getTranslation(currentLang, 'thDate')}:</strong> ${purchase.date || '—'}</div>
-        <div><strong>${getTranslation(currentLang, 'thSupplier')}:</strong> ${purchase.supplier || '—'}</div>
-        <div><strong>${getTranslation(currentLang, 'thSupplierPhone')}:</strong> ${purchase.supplierPhone || '—'}</div>
-        ${purchase.po ? `<div><strong>${getTranslation(currentLang, 'thPO')}:</strong> #${purchase.po}</div>` : ''}
-      </div>
-      <table>
-        <thead>
-          <tr>
-            <th>${getTranslation(currentLang, 'thProduct')}</th>
-            <th>${getTranslation(currentLang, 'thQuantity')}</th>
-            <th>${getTranslation(currentLang, 'thUnitCost')}</th>
-            <th>${getTranslation(currentLang, 'thTotal')}</th>
-          </tr>
-        </thead>
-        <tbody>
-          <tr>
-            <td>${productName}</td>
-            <td>${purchase.qty}</td>
-            <td>${(Number(purchase.unitCost) || 0).toFixed(2)}</td>
-            <td>${total.toFixed(2)}</td>
-          </tr>
-        </tbody>
-        <tfoot>
-          <tr>
-            <th colspan="3" style="text-align:${currentLang === 'ar' ? 'right' : 'left'}">${getTranslation(currentLang, 'thTotal')}</th>
-            <th>${total.toFixed(2)}</th>
-          </tr>
-        </tfoot>
-      </table>
-      <div style="margin-top:12px">
-        <button onclick="window.print()">${getTranslation(currentLang, 'btnPrintDraft')}</button>
-      </div>
-    </body>
-    </html>
-  `);
-  w.document.close();
+  try {
+    console.log('printPurchaseInvoice called with ID:', purchaseId);
+    
+    if (!purchaseId || purchaseId.trim() === '') {
+      return alert(getTranslation(getUISettings().language, 'orderNotFoundAlert') || 'Purchase ID is required');
+    }
+    
+    const purchase = db.purchases.find(r => r.id === purchaseId);
+    if (!purchase) {
+      return alert(getTranslation(getUISettings().language, 'orderNotFoundAlert') || 'Purchase not found');
+    }
+    
+    const pmap = productMap();
+    const productName = pmap.get(purchase.productId)?.name || '—';
+    const total = (Number(purchase.qty) || 0) * (Number(purchase.unitCost) || 0);
+    
+    const w = window.open('', '_blank');
+    if (!w || w.closed || typeof w.closed === 'undefined') {
+      alert(getTranslation(getUISettings().language, 'popupBlockedAlert') || 'Popup was blocked. Please allow popups for this site and try again.');
+      return;
+    }
+    
+    const currentLang = getUISettings().language;
+    
+    w.document.write(`
+      <html lang="${currentLang === 'ar' ? 'ar' : 'en'}" dir="${currentLang === 'ar' ? 'rtl' : 'ltr'}">
+      <head>
+        <meta charset="utf-8">
+        <title>${getTranslation(currentLang, 'btnInvoice')} - ${productName}</title>
+        <style>
+          body{font-family:system-ui,Segoe UI,Roboto,Arial;padding:24px}
+          table{width:100%;border-collapse:collapse;margin-top:16px}
+          th,td{border:1px solid #ccc;padding:8px;text-align:${currentLang === 'ar' ? 'right' : 'left'}}
+          .header-info{margin-bottom:16px;padding:12px;border:1px solid #ddd;border-radius:6px;background:#f9f9f9}
+        </style>
+      </head>
+      <body>
+        <h2>${getTranslation(currentLang, 'btnInvoice')} - ${getTranslation(currentLang, 'purchasesTitle')}</h2>
+        <div class="header-info">
+          <div><strong>${getTranslation(currentLang, 'thDate')}:</strong> ${purchase.date || '—'}</div>
+          <div><strong>${getTranslation(currentLang, 'thSupplier')}:</strong> ${purchase.supplier || '—'}</div>
+          <div><strong>${getTranslation(currentLang, 'thSupplierPhone')}:</strong> ${purchase.supplierPhone || '—'}</div>
+          ${purchase.po ? `<div><strong>${getTranslation(currentLang, 'thPO')}:</strong> #${purchase.po}</div>` : ''}
+        </div>
+        <table>
+          <thead>
+            <tr>
+              <th>${getTranslation(currentLang, 'thProduct')}</th>
+              <th>${getTranslation(currentLang, 'thQuantity')}</th>
+              <th>${getTranslation(currentLang, 'thUnitCost')}</th>
+              <th>${getTranslation(currentLang, 'thTotal')}</th>
+            </tr>
+          </thead>
+          <tbody>
+            <tr>
+              <td>${productName}</td>
+              <td>${purchase.qty}</td>
+              <td>${(Number(purchase.unitCost) || 0).toFixed(2)}</td>
+              <td>${total.toFixed(2)}</td>
+            </tr>
+          </tbody>
+          <tfoot>
+            <tr>
+              <th colspan="3" style="text-align:${currentLang === 'ar' ? 'right' : 'left'}">${getTranslation(currentLang, 'thTotal')}</th>
+              <th>${total.toFixed(2)}</th>
+            </tr>
+          </tfoot>
+        </table>
+        <div style="margin-top:12px">
+          <button onclick="window.print()">${getTranslation(currentLang, 'btnPrintDraft')}</button>
+        </div>
+      </body>
+      </html>
+    `);
+    w.document.close();
+    console.log('Invoice window opened successfully for purchase ID:', purchaseId);
+  } catch (error) {
+    console.error('Error in printPurchaseInvoice:', error);
+    alert(getTranslation(getUISettings().language, 'invoiceError') || 'Error generating invoice. Please try again.');
+  }
 }
 
 

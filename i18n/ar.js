@@ -283,5 +283,9 @@ window.I18N_AR = {
   thAvailable: "المتوفر",
   thStatus: "حالة",
   thQuantitySold: "الكمية المباعة",
-  thRevenue: "الإيراد"
+  thRevenue: "الإيراد",
+  
+  // Error messages
+  popupBlockedAlert: "تم حظر النافذة المنبثقة. يرجى السماح للنوافذ المنبثقة لهذا الموقع والمحاولة مرة أخرى.",
+  invoiceError: "خطأ في إنشاء الفاتورة. يرجى المحاولة مرة أخرى."
 };
