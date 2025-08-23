@@ -1820,10 +1820,45 @@ renderPurchaseDraft();
       <td>${r.supplier || ''}</td>
       <td>${r.supplierPhone || ''}</td>
       <td>${r.po ? ('#' + r.po) : ''}</td>
-      <td><button data-del="${r.id}" class="btn-danger" type="button">${getTranslation(getUISettings().language, 'btnDelete')}</button></td>
+      <td class="flex"><button data-invoice="${r.id}" data-po="${r.po || ''}" class="btn-muted" type="button">${getTranslation(getUISettings().language, 'btnInvoice')}</button><button data-del="${r.id}" class="btn-danger" type="button">${getTranslation(getUISettings().language, 'btnDelete')}</button></td>
     `;
     tbody.appendChild(tr);
   }
+
+  // Add event handler for Invoice and Delete buttons
+  tbody.onclick = async (e) => {
+    const invoiceBtn = e.target.closest('button[data-invoice]');
+    const deleteBtn = e.target.closest('button[data-del]');
+    
+    if (invoiceBtn) {
+      const purchaseId = invoiceBtn.dataset.invoice;
+      const po = invoiceBtn.dataset.po;
+      
+      // If purchase has a PO number, use the existing PO-based function
+      if (po && po.trim()) {
+        printPurchaseByPO(po);
+      } else {
+        // Otherwise use individual purchase invoice function
+        printPurchaseInvoice(purchaseId);
+      }
+      return;
+    }
+    
+    if (deleteBtn) {
+      const purchaseId = deleteBtn.dataset.del;
+      const purchase = db.purchases.find(x => x.id === purchaseId);
+      const productName = purchase ? (pmap.get(purchase.productId)?.name || 'Unknown Product') : 'Unknown Purchase';
+      
+      const res = await confirmDeleteUniversal('purchases', purchaseId, productName);
+      if (!res.ok) return;
+      
+      db.purchases = db.purchases.filter(x => x.id !== purchaseId);
+      saveDB(db);
+      renderPurchases();
+      renderReports();
+      return;
+    }
+  };
 
   // 4) زر إضافة الشراء: نربطه مرّة واحدة ونضيف supplier + po
 // إضافة الصنف إلى المسودة بدلاً من الحفظ الفوري
@@ -2032,6 +2067,71 @@ function printPurchaseByPO(po){
       </table>
       <div style="margin-top:12px"><button onclick="window.print()">🖨️ طباعة / PDF</button></div>
     </body></html>`);
+  w.document.close();
+}
+
+// Function to print invoice for individual purchase
+function printPurchaseInvoice(purchaseId) {
+  const purchase = db.purchases.find(r => r.id === purchaseId);
+  if (!purchase) return alert(getTranslation(getUISettings().language, 'orderNotFoundAlert') || 'Purchase not found');
+  
+  const pmap = productMap();
+  const productName = pmap.get(purchase.productId)?.name || '—';
+  const total = (Number(purchase.qty) || 0) * (Number(purchase.unitCost) || 0);
+  
+  const w = window.open('', '_blank');
+  const currentLang = getUISettings().language;
+  
+  w.document.write(`
+    <html lang="${currentLang === 'ar' ? 'ar' : 'en'}" dir="${currentLang === 'ar' ? 'rtl' : 'ltr'}">
+    <head>
+      <meta charset="utf-8">
+      <title>${getTranslation(currentLang, 'btnInvoice')} - ${productName}</title>
+      <style>
+        body{font-family:system-ui,Segoe UI,Roboto,Arial;padding:24px}
+        table{width:100%;border-collapse:collapse;margin-top:16px}
+        th,td{border:1px solid #ccc;padding:8px;text-align:${currentLang === 'ar' ? 'right' : 'left'}}
+        .header-info{margin-bottom:16px;padding:12px;border:1px solid #ddd;border-radius:6px;background:#f9f9f9}
+      </style>
+    </head>
+    <body>
+      <h2>${getTranslation(currentLang, 'btnInvoice')} - ${getTranslation(currentLang, 'purchasesTitle')}</h2>
+      <div class="header-info">
+        <div><strong>${getTranslation(currentLang, 'thDate')}:</strong> ${purchase.date || '—'}</div>
+        <div><strong>${getTranslation(currentLang, 'thSupplier')}:</strong> ${purchase.supplier || '—'}</div>
+        <div><strong>${getTranslation(currentLang, 'thSupplierPhone')}:</strong> ${purchase.supplierPhone || '—'}</div>
+        ${purchase.po ? `<div><strong>${getTranslation(currentLang, 'thPO')}:</strong> #${purchase.po}</div>` : ''}
+      </div>
+      <table>
+        <thead>
+          <tr>
+            <th>${getTranslation(currentLang, 'thProduct')}</th>
+            <th>${getTranslation(currentLang, 'thQuantity')}</th>
+            <th>${getTranslation(currentLang, 'thUnitCost')}</th>
+            <th>${getTranslation(currentLang, 'thTotal')}</th>
+          </tr>
+        </thead>
+        <tbody>
+          <tr>
+            <td>${productName}</td>
+            <td>${purchase.qty}</td>
+            <td>${(Number(purchase.unitCost) || 0).toFixed(2)}</td>
+            <td>${total.toFixed(2)}</td>
+          </tr>
+        </tbody>
+        <tfoot>
+          <tr>
+            <th colspan="3" style="text-align:${currentLang === 'ar' ? 'right' : 'left'}">${getTranslation(currentLang, 'thTotal')}</th>
+            <th>${total.toFixed(2)}</th>
+          </tr>
+        </tfoot>
+      </table>
+      <div style="margin-top:12px">
+        <button onclick="window.print()">${getTranslation(currentLang, 'btnPrintDraft')}</button>
+      </div>
+    </body>
+    </html>
+  `);
   w.document.close();
 }
 
