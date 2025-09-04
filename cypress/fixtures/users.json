@@ -1,0 +1,24 @@
+{
+  "testUsers": [
+    {
+      "username": "admin",
+      "password": "admin123",
+      "salt": "randomsalt123",
+      "hash": "hashedpassword"
+    },
+    {
+      "username": "testuser", 
+      "password": "test123",
+      "salt": "testsalt456",
+      "hash": "testhashvalue"
+    }
+  ],
+  "validCredentials": {
+    "username": "admin",
+    "password": "admin123"
+  },
+  "invalidCredentials": {
+    "username": "wronguser",
+    "password": "wrongpass"
+  }
+}

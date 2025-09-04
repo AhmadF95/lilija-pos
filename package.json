@@ -13,15 +13,25 @@
     "build:linux": "electron-builder --linux AppImage deb",
     "build": "electron-builder -mwl",
     "scan": "node tools/selfcheck.js",
-    "smoke:audit": "node tools/smoke_audit.js"
+    "smoke:audit": "node tools/smoke_audit.js",
+    "smoke:auth": "node tools/smoke_auth.js",
+    "test:server": "node scripts/test-server.js",
+    "cypress:open": "cypress open",
+    "cypress:run": "cypress run",
+    "test:e2e": "start-server-and-test test:server http://localhost:3000 cypress:run",
+    "test:e2e:open": "start-server-and-test test:server http://localhost:3000 cypress:open",
+    "validate:e2e": "node scripts/validate-e2e-setup.js",
+    "test": "npm run scan && npm run smoke:audit && npm run smoke:auth && npm run validate:e2e"
   },
   "engines": {
     "node": ">=18"
   },
   "devDependencies": {
+    "cypress": "^15.1.0",
     "electron": "^29.0.0",
     "electron-builder": "^24.9.1",
-    "jsdom": "^24.0.0"
+    "jsdom": "^24.0.0",
+    "start-server-and-test": "^2.0.13"
   },
   "build": {
     "appId": "com.ministore.desktop",
@@ -48,4 +58,3 @@
     }
   }
 }
-
